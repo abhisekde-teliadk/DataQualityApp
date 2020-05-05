@@ -31,8 +31,10 @@ object DataQualityApp {
                     )
         .run()
         }
-        val output = result.getSimplifiedCheckResultOutput
-                            .toDF("check", "check_level", "check_status", "constraint", "constraint_status", "message")
+        val output = result.checkResults
+                           .values
+                           .toSeq
+                           .toDF("check", "check_level", "check_status", "constraint", "constraint_status", "message")
 
         println("+++ Results")
         output.show()
