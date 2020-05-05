@@ -31,7 +31,9 @@ object DataQualityApp {
                     )
         .run()
         }
-        val output = checkResultsAsDataFrame(sc, result)
+        val output = result.getSimplifiedCheckResultOutput
+                            .toDF("check", "check_level", "check_status", "constraint", "constraint_status", "message")
+
         println("+++ Results")
         output.show()
         output.write.parquet(args(1), classOf[org.apache.hadoop.io.compress.SnappyCodec])
