@@ -1,7 +1,7 @@
 // spark-shell -master yarn --conf spark.ui.port=4044
 package com.teliacompany.datamall
 
-import com.teliacompany.datamall.HdfsUtils
+import com.teliacompany.datamall._
 import org.apache.spark.{SparkConf, SparkContext}
 import com.amazon.deequ.VerificationSuite
 import com.amazon.deequ.checks.{Check, CheckLevel, CheckStatus}
@@ -16,7 +16,7 @@ object DataQualityApp {
     }
 
     def load(path: String) = {
-        ls = HdfsUtils.getAllFiles(path)
+        val ls = HdfsUtils.getAllFiles(path)
         println("+++ Files list: ")
         printn(ls)
     }
