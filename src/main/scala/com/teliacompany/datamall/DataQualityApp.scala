@@ -3,6 +3,7 @@ package com.teliacompany.datamall
 
 import com.teliacompany.datamall._
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql._
 
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
 import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
@@ -12,9 +13,9 @@ object DataQualityApp {
     def main(args: Array[String]) = {
         val conf = new SparkConf().setAppName("Hoad HDFS").setMaster("yarn-client")
         val sc = new SparkContext(conf)
-        val sqlc = new org.apache.spark.sql.SQLContext(sc) 
+        val sqlc = new SQLContext(sc) 
+        
         // DataFrame and toDF support
-        import org.apache.spark.sql.DataFrame
         val session = sqlc.sparkSession
         import session.sqlContext.implicits._
         
