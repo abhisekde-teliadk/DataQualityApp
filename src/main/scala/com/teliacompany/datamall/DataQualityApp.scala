@@ -22,7 +22,7 @@ object DataQualityApp {
                        .parquet(path + "/*")
 
     val result: VerificationResult = { 
-        VerificationSuite().onData(work_amz_rev)
+        VerificationSuite().onData(dataset)
                            .addCheck(
                                 Check(CheckLevel.Error, "Data Validation Check")
                                     .hasCompleteness("customer_id", _ >= 0.90) // At least 90% rows have customer_id defined
@@ -34,10 +34,10 @@ object DataQualityApp {
                             )
                             .run()
     }
-    val output = checkResultsAsDataFrame(session, result)
+    val output = checkResultsAsDataFrame(spark, result)
     output.show()
     println("+++ Results")
-    val out_name = root + "/" + pond + "/checks_" project + "_" + name
+    val out_name = root + "/" + pond + "/checks_" + project + "_" + name
     output.write.parquet(out_name)
     spark.stop()
 
