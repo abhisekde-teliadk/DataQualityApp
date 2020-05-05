@@ -1,4 +1,6 @@
 // spark-shell -master yarn --conf spark.ui.port=4044
+import org.apache.spark.sql.SparkSession
+/*
 package com.teliacompany.datamall
 
 import com.teliacompany.datamall._
@@ -7,6 +9,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
 import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
 import com.amazon.deequ.checks.{Check, CheckLevel}
+*/
 
 object DataQualityApp {
     def main(args: Array[String]) = {
