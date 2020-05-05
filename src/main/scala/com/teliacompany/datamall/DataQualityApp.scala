@@ -16,7 +16,7 @@ object DataQualityApp {
         import sqlContext.implicits._
         
         val dataset = sqlContext.read.parquet(args(0))
-/*
+
         val result: VerificationResult = { 
         VerificationSuite()
             .onData(dataset)
@@ -31,11 +31,11 @@ object DataQualityApp {
                     )
         .run()
         }
-        val output = checkResultsAsDataFrame(session, result)
+        val output = checkResultsAsDataFrame(sc, result)
         println("+++ Results")
         output.show()
         output.write.parquet(args(1), classOf[org.apache.hadoop.io.compress.SnappyCodec])
-*/
+
         println("+++ Results")
         dataset.show()
         sc.stop()
