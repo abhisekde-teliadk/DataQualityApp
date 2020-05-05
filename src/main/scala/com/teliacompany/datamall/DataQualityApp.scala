@@ -7,12 +7,12 @@ object DataQualityApp {
     val spark = SparkSession.builder.appName("DataQualityApp").getOrCreate()
     import spark.implicits._
 
-    input = args(0)
-    project = input.split("/")(0)
-    name = input.split("/")(1)
-    pond = name.split("_")(0)
-    root = "/data"
-    path = root + "/" + pond + "/" + project + "/" + name + "/" + "data"
+    val input = args(0)
+    val project = input.split("/")(0)
+    val name = input.split("/")(1)
+    val pond = name.split("_")(0)
+    val root = "/data"
+    val path = root + "/" + pond + "/" + project + "/" + name + "/" + "data"
     val dataset = spark.read
                        .option("basePath", path)
                        .parquet(path + "/*")
