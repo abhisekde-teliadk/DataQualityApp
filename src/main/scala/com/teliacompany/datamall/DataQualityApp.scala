@@ -3,7 +3,7 @@ package com.teliacompany.datamall
 
 import com.teliacompany.datamall._
 import org.apache.spark.{SparkConf, SparkContext}
-org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SQLContext
 
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
 import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
