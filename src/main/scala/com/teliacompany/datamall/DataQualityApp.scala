@@ -3,8 +3,8 @@ package com.teliacompany.datamall
 import org.apache.spark.sql.{SparkSession, SQLContext, DataFrame}
 
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
-import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
-import com.amazon.deequ.checks.{Check, CheckLevel}
+import com.amazon.deequ.VerificationResult._
+import com.amazon.deequ.checks._
 
 object DataQualityApp {
     def main(args: Array[String]) = {
@@ -37,7 +37,7 @@ object DataQualityApp {
     val output = checkResultsAsDataFrame(spark, result)
     output.show()
     println("+++ Results")
-    val out_name = root + "/" + pond + "/checks_" + project + "_" + name
+    val out_name = root + "/" + pond + "/checks_" + project + "_" + name    
     output.write.parquet(out_name)
     spark.stop()
 
