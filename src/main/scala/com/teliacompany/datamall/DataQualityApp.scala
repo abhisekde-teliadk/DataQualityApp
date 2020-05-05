@@ -29,10 +29,10 @@ object DataQualityApp {
                     )
         .run()
         }
-
+        val output = checkResultsAsDataFrame(session, result)
         println("+++ Results")
-        result.show()
-        result.write.parquet(args(1), classOf[org.apache.hadoop.io.compress.SnappyCodec])
+        output.show()
+        output.write.parquet(args(1), classOf[org.apache.hadoop.io.compress.SnappyCodec])
 
         sc.stop()
     }
