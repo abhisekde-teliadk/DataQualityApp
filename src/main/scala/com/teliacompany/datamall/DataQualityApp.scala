@@ -10,6 +10,15 @@ import com.amazon.deequ.checks.{Check, CheckLevel}
 
 object DataQualityApp {
     def main(args: Array[String]) = {
+    val logFile = "DataQuality.log" // Should be some file on your system
+    val spark = SparkSession.builder.appName("Simple Application").getOrCreate()
+    val logData = spark.read.textFile(logFile).cache()
+    val numAs = logData.filter(line => line.contains("a")).count()
+    val numBs = logData.filter(line => line.contains("b")).count()
+    println(s"Lines with a: $numAs, Lines with b: $numBs")
+    spark.stop()
+
+    /*
         val conf = new SparkConf().setAppName("Hoad HDFS").setMaster("yarn-client")
         val sc = new SparkContext(conf)
         val sqlContext = new org.apache.spark.sql.SQLContext(sc)
@@ -43,6 +52,7 @@ object DataQualityApp {
         println("+++ Results")
         dataset.show()
         sc.stop()
+        */
     }
 }
 
