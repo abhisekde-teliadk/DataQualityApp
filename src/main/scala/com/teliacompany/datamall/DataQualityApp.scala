@@ -1,57 +1,50 @@
-// spark-shell -master yarn --conf spark.ui.port=4044
-import org.apache.spark.sql.SparkSession
-/*
 package com.teliacompany.datamall
 
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SQLContext
 import com.teliacompany.datamall._
-import org.apache.spark.{SparkConf, SparkContext}
 
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
 import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
 import com.amazon.deequ.checks.{Check, CheckLevel}
-*/
 
 object DataQualityApp {
     def main(args: Array[String]) = {
     val spark = SparkSession.builder.appName("DataQualityApp").getOrCreate()
-    println("+++ Hello Spark 2")
-    spark.stop()
 
-    /*
-        val conf = new SparkConf().setAppName("Hoad HDFS").setMaster("yarn-client")
-        val sc = new SparkContext(conf)
-        val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-        import sqlContext.implicits._
+    // DataFrame and toDF support
+    import org.apache.spark.sql.DataFrame
+    val session = sqlContext.sparkSession
+    import session.sqlContext.implicits._
         
-        val dataset = sqlContext.read.parquet(args(0))
+    val dataset = sqlContext.read.parquet(args(0))
 
-        val result: VerificationResult = { 
-        VerificationSuite()
-            .onData(dataset)
-            .addCheck(
-                Check(CheckLevel.Error, "Data Validation Check")
-                    .hasCompleteness("customer_id", _ >= 0.90) // At least 90% rows have customer_id defined
-                    .isUnique("review_id")
-                    .isNonNegative("total_votes") 
-                    .hasStandardDeviation("helpful_votes", _ < 3.0)
-                    .hasEntropy("helpful_votes", _ < 2.0)
-                    .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
-                    )
-        .run()
-        }
-        val output = result.checkResults
-                           .values
-                           .toSeq
-                           .toDF("check", "check_level", "check_status", "constraint", "constraint_status", "message")
+    val result: VerificationResult = { 
+    VerificationSuite()
+        .onData(dataset)
+        .addCheck(
+            Check(CheckLevel.Error, "Data Validation Check")
+                .hasCompleteness("customer_id", _ >= 0.90) // At least 90% rows have customer_id defined
+                .isUnique("review_id")
+                .isNonNegative("total_votes") 
+                .hasStandardDeviation("helpful_votes", _ < 3.0)
+                .hasEntropy("helpful_votes", _ < 2.0)
+                .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
+                )
+    .run()
+    }
+    val output = result.checkResults
+                       .values
+                       .toSeq
+                       .toDF("check", "check_level", "check_status", "constraint", "constraint_status", "message")
 
-        println("+++ Results")
-        output.show()
-        output.write.parquet(args(1)) //, classOf[org.apache.hadoop.io.compress.SnappyCodec])
+    println("+++ Results")
+    output.show()
+    output.write.parquet(args(1)) //, classOf[org.apache.hadoop.io.compress.SnappyCodec])
 
-        println("+++ Results")
-        dataset.show()
-        sc.stop()
-        */
+    println("+++ Results")
+    dataset.show()
+    sc.stop()
     }
 }
 
