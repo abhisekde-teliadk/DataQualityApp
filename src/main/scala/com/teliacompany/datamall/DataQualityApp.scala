@@ -38,7 +38,7 @@ object DataQualityApp {
 
         println("+++ Results")
         output.show()
-        output.write.parquet(args(1), classOf[org.apache.hadoop.io.compress.SnappyCodec])
+        output.write.parquet(args(1)) //, classOf[org.apache.hadoop.io.compress.SnappyCodec])
 
         println("+++ Results")
         dataset.show()
