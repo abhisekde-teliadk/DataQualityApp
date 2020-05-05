@@ -4,7 +4,7 @@ import org.apache.spark.sql.{SparkSession, SQLContext, DataFrame}
 
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
 import com.amazon.deequ.VerificationResult._
-import com.amazon.deequ.checks._
+import com.amazon.deequ.checks.{Check, CheckLevel}
 
 object DataQualityApp {
     def main(args: Array[String]) = {
