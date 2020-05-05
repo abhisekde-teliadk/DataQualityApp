@@ -42,11 +42,5 @@ object DataQualityApp {
         dataset.show()
         sc.stop()
     }
-
-    def load(path: String, sc: SparkContext) = {
-        val ls = HdfsUtils.getAllFiles(path, sc)
-        println("+++ Files list: ")
-        println(ls)
-    }
 }
 
