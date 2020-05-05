@@ -3,15 +3,37 @@ package com.teliacompany.datamall
 
 import com.teliacompany.datamall._
 import org.apache.spark.{SparkConf, SparkContext}
-import com.amazon.deequ.VerificationSuite
-import com.amazon.deequ.checks.{Check, CheckLevel, CheckStatus}
-import com.amazon.deequ.constraints.ConstraintStatus
+
+import com.amazon.deequ.{VerificationSuite, VerificationResult}
+import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
+import com.amazon.deequ.checks.{Check, CheckLevel}
 
 object DataQualityApp {
     def main(args: Array[String]) = {
         val conf = new SparkConf().setAppName("Hoad HDFS").setMaster("yarn-client")
         val sc = new SparkContext(conf)
-        load(args(0), sc)
+        
+        val dataset = sqlContext.read.parquet(args(0))
+
+        val result: VerificationResult = { 
+        VerificationSuite()
+            .onData(dataset)
+            .addCheck(
+                Check(CheckLevel.Error, "Data Validation Check")
+                    .hasCompleteness("customer_id", _ >= 0.90) // At least 90% rows have customer_id defined
+                    .isUnique("review_id")
+                    .isNonNegative("total_votes") 
+                    .hasStandardDeviation("helpful_votes", _ < 3.0)
+                    .hasEntropy("helpful_votes", _ < 2.0)
+                    .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
+                    )
+        .run()
+        }
+
+        println("+++ Results")
+        result.show()
+        result.write.parquet(args(1), classOf[org.apache.hadoop.io.compress.SnappyCodec])
+
         sc.stop()
     }
 
