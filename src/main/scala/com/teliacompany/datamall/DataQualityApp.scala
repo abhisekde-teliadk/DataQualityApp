@@ -20,7 +20,7 @@ object DataQualityApp {
     val dataset = spark.read
                        .option("basePath", path)
                        .parquet(path + "/*")
-
+    /*
     val result: VerificationResult = { 
         VerificationSuite().onData(dataset)
                            .addCheck(
@@ -39,6 +39,7 @@ object DataQualityApp {
     println("+++ Results")
     val out_name = root + "/" + pond + "/checks_" + project + "_" + name    
     output.write.parquet(out_name)
+    */
     spark.stop()
 
     }
