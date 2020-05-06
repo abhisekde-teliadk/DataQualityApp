@@ -20,14 +20,14 @@ object DataQualityApp {
     val p_items = path.split("/")
     val pond = p_items(p_items.indexOf("data") +1)
     val in_name = p_items(p_items.lastIndexOf("data") -1)
-    val project = p_items(p_items.indexOf(dataset) -1)
+    val project = p_items(p_items.indexOf(in_name) -1)
     val out_name = "/data/" + pond + "/checks_" + project + "_" + in_name
 
     val df = spark.read
                   .option("basePath", path)
                   .parquet(path + "/*")
 
-    val stage1 = suggest_constraints(df)
+    val stage1 = suggest_constraints(in_name, df)
     val output = apply_checks(df, stage1, spark)
     
     output.show()
@@ -37,10 +37,10 @@ object DataQualityApp {
 
     }
 
-    def suggest_constraints(dataset: DataFrame) = {
+    def suggest_constraints(name: String, dataset: DataFrame) = {
 
         val schema = dataset.schema
-                            .map(e => (in_name + "." + e.name, e.dataType.typeName))
+                            .map(e => (name + "." + e.name, e.dataType.typeName))
                             .toDF("name", "column", "data_type")
 
         val result = { 
@@ -53,7 +53,7 @@ object DataQualityApp {
         val sug1 = result.constraintSuggestions
                          .flatMap { 
                                     case (column, suggestions) =>  suggestions.map { 
-                                        constraint => (in_name, column, constraint.currentValue.split(": ")(0), constraint.currentValue.split(": ")(1))  
+                                        constraint => (name, column, constraint.currentValue.split(": ")(0), constraint.currentValue.split(": ")(1))  
                                     } 
                           }
                          .toSeq.toDF("name", "column", "constraint", "current_value")
