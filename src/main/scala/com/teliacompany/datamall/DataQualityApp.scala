@@ -27,7 +27,7 @@ object DataQualityApp {
                   .option("basePath", path)
                   .parquet(path + "/*")
 
-    val stage1 = suggest_constraints(in_name, df)
+    val stage1 = suggest_constraints(in_name, df, spark)
     val output = apply_checks(df, stage1, spark)
     
     output.show()
@@ -37,10 +37,11 @@ object DataQualityApp {
 
     }
 
-    def suggest_constraints(name: String, dataset: DataFrame) = {
+    def suggest_constraints(name: String, dataset: DataFrame, session: SparkSession) = {
+        import session.implicits._
 
         val schema = dataset.schema
-                            .map(e => (name + "." + e.name, e.dataType.typeName))
+                            .map(e => (name, e.name, e.dataType.typeName))
                             .toDF("name", "column", "data_type")
 
         val result = { 
@@ -68,7 +69,7 @@ object DataQualityApp {
 
         val check = {
             var init_c = Check(CheckLevel.Error, "Data Validation Check")
-            completeness.foreach(c => init_c.hasCompleteness(c(0), _ >= 0.99))
+            completeness.foreach(c => init_c.hasCompleteness(c(0).toString, _ >= 0.99))
         }
 
         val result: VerificationResult = { 
