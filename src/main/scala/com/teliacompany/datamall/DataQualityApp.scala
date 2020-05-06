@@ -28,7 +28,7 @@ object DataQualityApp {
                   .parquet(path + "/*")
 
     val stage1 = suggest_constraints(in_name, df, spark)
-    val output = apply_checks(df, stage1, spark)
+    val output = apply_checks(in_name, df, stage1, spark)
     
     output.show()
     println("+++ Results")    
@@ -37,8 +37,8 @@ object DataQualityApp {
 
     }
 
-    def suggest_constraints(name: String, dataset: DataFrame, session: SparkSession) = {
-        import session.implicits._
+    def suggest_constraints(name: String, dataset: DataFrame, spark: SparkSession) = {
+        import spark.implicits._
 
         val schema = dataset.schema
                             .map(e => (name, e.name, e.dataType.typeName))
@@ -62,13 +62,13 @@ object DataQualityApp {
         schema.join(sug1, Seq("column", "name"), "inner")
     }
 
-    def apply_checks(dataset: DataFrame, suggestion: DataFrame, session: SparkSession) = {
+    def apply_checks(name: String, dataset: DataFrame, suggestion: DataFrame, session: SparkSession) = {
 
         val completeness = suggestion.where(suggestion("current_value").startsWith("Completeness"))
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
         var check = Check(CheckLevel.Error, "Data Validation Check")
-        completeness.foreach(c => check.hasCompleteness(c(0).toString, _ >= 0.99))
+        .select("column").collect.foreach(c => check.hasCompleteness(c(0).toString, _ >= 0.99))
         
         val result: VerificationResult = { 
         VerificationSuite().onData(dataset)
@@ -78,7 +78,7 @@ object DataQualityApp {
                                 //    .isUnique("review_id")
                                 //    .isNonNegative("total_votes") 
                                 //    .hasStandardDeviation("helpful_votes", _ < 3.0)
-                                //   .hasEntropy("helpful_votes", _ < 2.0)
+                                //    .hasEntropy("helpful_votes", _ < 2.0)
                                 //    .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
                                     )
                            .run()
