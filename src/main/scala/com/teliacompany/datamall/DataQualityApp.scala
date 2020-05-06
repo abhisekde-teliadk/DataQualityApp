@@ -7,7 +7,6 @@ import com.amazon.deequ.suggestions.{ConstraintSuggestionRunner, Rules}
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
 import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
 import com.amazon.deequ.checks.{Check, CheckLevel}
-import com.amazon.deequ.checks.Check.haveCompleteness
 
 object DataQualityApp {
     def main(args: Array[String]) = {
@@ -71,13 +70,13 @@ object DataQualityApp {
         val completeness = suggestion.where(suggestion("current_value").startsWith("Completeness"))
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
-        
         val col_list = completeness.select("column")
                         .collect
                         .map(e => e(0).toString)
                         .toSeq
 
-        var checks = Check(CheckLevel.Error, "Data Validation Check").haveCompleteness(col_list, _ >= 0.99) // 99% rows of each columns are populated
+        // var checks = Check(CheckLevel.Error, "Data Validation Check").haveCompleteness(col_list, _ >= 0.99) // 99% rows of each columns are populated
+        var checks = Check(CheckLevel.Error, "Data Validation Check").hasCompleteness(col_list(0), _ >= 0.99) // 99% rows of each columns are populated
         
         val result: VerificationResult = { 
             VerificationSuite().onData(dataset)
