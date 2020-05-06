@@ -32,7 +32,9 @@ object DataQualityApp {
     
     output.show()
     println("+++ Results")    
-    output.write.parquet(out_name)
+    output.mode('append')
+          .write
+          .parquet(out_name)
     spark.stop()
 
     }
