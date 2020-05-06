@@ -59,7 +59,7 @@ object DataQualityApp {
                           }
                          .toSeq.toDF("name", "column", "constraint", "current_value")
         // return
-        schema.join(sugg, Seq("column", "name"), "inner")
+        schema.join(sug1, Seq("column", "name"), "inner")
     }
 
     def apply_checks(dataset: DataFrame, suggestion: DataFrame, session: SparkSession) = {
@@ -67,11 +67,9 @@ object DataQualityApp {
         val completeness = suggestion.where(suggestion("current_value").startsWith("Completeness"))
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
-        val check = {
-            var init_c = Check(CheckLevel.Error, "Data Validation Check")
-            completeness.foreach(c => init_c.hasCompleteness(c(0).toString, _ >= 0.99))
-        }
-
+        var check = Check(CheckLevel.Error, "Data Validation Check")
+        completeness.foreach(c => check.hasCompleteness(c(0).toString, _ >= 0.99))
+        
         val result: VerificationResult = { 
         VerificationSuite().onData(dataset)
                            .addCheck(check
