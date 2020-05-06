@@ -30,10 +30,11 @@ object DataQualityApp {
     val stage1 = suggest_constraints(in_name, df, spark)
     val output = apply_checks(in_name, df, stage1, spark)
     
+    // Output
     output.show()
     println("+++ Results")    
-    output.mode("append")
-          .write
+    output.write
+          .mode("append")
           .parquet(out_name)
     spark.stop()
 
@@ -83,7 +84,7 @@ object DataQualityApp {
                 .run()
         }
         // return
-        checkResultsAsDataFrame(session, result)
+        checkResultsAsDataFrame(session, result).withColumn("name", lit(name))
     }
 }
 
