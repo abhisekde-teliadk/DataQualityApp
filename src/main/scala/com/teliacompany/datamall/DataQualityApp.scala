@@ -75,6 +75,9 @@ object DataQualityApp {
                         .map(e => e(0).toString)
                         .toSeq
 
+        println(col_list)
+        println("+++ Column list")
+
         // var checks = Check(CheckLevel.Error, "Data Validation Check").haveCompleteness(col_list, _ >= 0.99) // 99% rows of each columns are populated
         var checks = Check(CheckLevel.Error, "Data Validation Check").hasCompleteness(col_list(0), _ >= 0.99) // 99% rows of each columns are populated
         
