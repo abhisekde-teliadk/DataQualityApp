@@ -7,6 +7,7 @@ import com.amazon.deequ.suggestions.{ConstraintSuggestionRunner, Rules}
 import com.amazon.deequ.{VerificationSuite, VerificationResult}
 import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
 import com.amazon.deequ.checks.{Check, CheckLevel}
+import com.amazon.deequ.checks.Check._
 
 object DataQualityApp {
     def main(args: Array[String]) = {
@@ -67,7 +68,7 @@ object DataQualityApp {
 
     def apply_checks(name: String, dataset: DataFrame, suggestion: DataFrame, session: SparkSession) = {
 
-        val completeness = suggestion.where(suggestion("current_value").startsWith("Completeness"))
+        val completeness = suggestion.where(suggestion("constraint").startsWith("Completeness"))
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
         val col_list = completeness.select("column")
