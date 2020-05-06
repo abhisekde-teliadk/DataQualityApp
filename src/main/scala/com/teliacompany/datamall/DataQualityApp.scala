@@ -67,20 +67,14 @@ object DataQualityApp {
         val completeness = suggestion.where(suggestion("current_value").startsWith("Completeness"))
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
-        var check = Check(CheckLevel.Error, "Data Validation Check")
-        .select("column").collect.foreach(c => check.hasCompleteness(c(0).toString, _ >= 0.99))
+        var checks = Check(CheckLevel.Error, "Data Validation Check")
+        completeness.select("column")
+                    .collect
+                    .foreach(c => checks.hasCompleteness(c(0).toString, _ >= 0.99))
         
         val result: VerificationResult = { 
         VerificationSuite().onData(dataset)
-                           .addCheck(check
-                                //Check(CheckLevel.Error, "Data Validation Check")
-                                //    .hasCompleteness("customer_id", _ >= 0.90) // At least 90% rows have customer_id defined
-                                //    .isUnique("review_id")
-                                //    .isNonNegative("total_votes") 
-                                //    .hasStandardDeviation("helpful_votes", _ < 3.0)
-                                //    .hasEntropy("helpful_votes", _ < 2.0)
-                                //    .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
-                                    )
+                           .addCheck(checks)
                            .run()
         }
         // return
