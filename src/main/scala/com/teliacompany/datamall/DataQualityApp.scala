@@ -101,7 +101,7 @@ object DataQualityApp {
     // }
 
     def time_now() = {
-        new java.sql.Timestamp(date.getTime)
+        new java.sql.Timestamp(System.currentTimeMillis())
     }
 }
 
