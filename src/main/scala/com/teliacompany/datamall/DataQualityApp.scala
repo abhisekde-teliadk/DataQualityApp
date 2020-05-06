@@ -93,7 +93,7 @@ object DataQualityApp {
         // return
         checkResultsAsDataFrame(session, result)
             .withColumn("name", lit(name))
-            .withColumn("dml_time", ts_now())
+            .withColumn("dml_time", time_now())
     }
 
     // def check_anomaly(in_name: String, df: DataFrame, stage3: DataFrame) = {
