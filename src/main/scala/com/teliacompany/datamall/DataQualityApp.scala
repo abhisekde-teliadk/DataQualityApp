@@ -1,6 +1,7 @@
 package com.teliacompany.datamall
 
 import org.apache.spark.sql.{SparkSession, SQLContext, DataFrame}
+import org.apache.spark.sql.functions._
 
 import com.amazon.deequ.suggestions.{ConstraintSuggestionRunner, Rules}
 
@@ -17,26 +18,29 @@ object DataQualityApp {
     if (args.length == 0)
         throw new Exception("No dataset provided. Please pass a fully qualified path of a dataset as argument.")
 
-    val path = args(0)
-    val p_items = path.split("/")
-    val pond = p_items(p_items.indexOf("data") +1)
-    val in_name = p_items(p_items.lastIndexOf("data") -1)
-    val project = p_items(p_items.indexOf(in_name) -1)
-    val out_name = "/data/" + pond + "/checks_" + project + "_" + in_name
+    val path        = args(0)
+    val p_items     = path.split("/")
+    val pond        = p_items(p_items.indexOf("data") +1)
+    val in_name     = p_items(p_items.lastIndexOf("data") -1)
+    val project     = p_items(p_items.indexOf(in_name) -1)
+    val out_checks  = "/data/" + pond + "/checks_" + project + "_" + in_name
 
     val df = spark.read
                   .option("basePath", path)
                   .parquet(path + "/*")
 
-    val stage1 = suggest_constraints(in_name, df, spark)
-    val output = apply_checks(in_name, df, stage1, spark)
-    
-    // Output
-    output.show()
-    println("+++ Results")    
-    output.write
-          .mode("append")
-          .parquet(out_name)
+    val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
+    stage1.show()
+    println("+++ Suggestions")
+
+    val stage2 = apply_checks(in_name, df, stage1, spark) // Completeness as suggested 
+    // Write down stats
+    stage2.write
+        .mode("append")
+        .parquet(out_checks)
+    stage2.show()
+    println("+++ Check Results")
+
     spark.stop()
 
     }
@@ -79,9 +83,7 @@ object DataQualityApp {
         println(col_list)
         println("+++ Column list")
 
-        var checks = Check(CheckLevel.Error, "Data Validation Check").haveAnyCompleteness(col_list, _ >= 0.99) // 99% rows of each columns are populated
-        // var checks = Check(CheckLevel.Error, "Data Validation Check")
-        // col_list.foreach(e => checks.hasCompleteness(e, _ >= 0.99)) // 99% rows of each columns are populated
+        var checks = Check(CheckLevel.Error, "Data Validation Check").haveCompleteness(col_list, _ >= 0.99) // 99% rows of each columns are populated
         
         val result: VerificationResult = { 
             VerificationSuite().onData(dataset)
@@ -90,6 +92,17 @@ object DataQualityApp {
         }
         // return
         checkResultsAsDataFrame(session, result)
+            .withColumn("name", lit(name))
+            .withColumn("dml_time", ts_now())
+    }
+
+    // def check_anomaly(in_name: String, df: DataFrame, stage3: DataFrame) = {
+    //    
+    // }
+
+    def time_now() = {
+        val date = new java.util.Date()
+        new java.sql.Timestamp(new org.joda.time.DateTime(date).getMillis)
     }
 }
 
