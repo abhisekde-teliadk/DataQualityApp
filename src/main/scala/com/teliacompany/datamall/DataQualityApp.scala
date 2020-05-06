@@ -101,8 +101,7 @@ object DataQualityApp {
     // }
 
     def time_now() = {
-        val date = new java.util.Date()
-        new java.sql.Timestamp(new org.joda.time.DateTime(date).getMillis)
+        new java.sql.Timestamp(date.getTime)
     }
 }
 
