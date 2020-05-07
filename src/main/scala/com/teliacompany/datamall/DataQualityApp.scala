@@ -117,25 +117,14 @@ object DataQualityApp {
 
     def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
 
-        val analysis_std = AnalysisRunner.onData(metrics)
-                            .addAnalyzer(StandardDeviation("value"))
-                            .run()
-        val std_devs = successMetricsAsDataFrame(session, analysis_std)
-                            .withColumnRenamed("name","analysis")
-                            .withColumnRenamed("value","std_dev")
-                            .withColumn("name", lit(name))
+        val mean_std = dataset.groupBy("instance", "analysis", "name")
+                              .agg(
+                                    avg(col("value").alias("mean")),
+                                    stddev(col("value").alias("std_dev"))
+                              )
 
-        val analysis_mean = AnalysisRunner.onData(metrics)
-                            .addAnalyzer(Mean("value"))
-                            .run()
-        val means = successMetricsAsDataFrame(session, analysis_mean)
-                            .withColumnRenamed("name","analysis")
-                            .withColumnRenamed("value","mean")
-                            .withColumn("name", lit(name))
-
-        val mean_std_dev = std_devs.join(means.select("instance", "name", "mean"), Seq("instance", "name"), "inner")
-        val thresholds = mean_std_dev.withColumn("lower", mean_std_dev("mean") - mean_std_dev("std_dev"))
-                                     .withColumn("lower", mean_std_dev("mean") + mean_std_dev("std_dev"))
+        val thresholds = mean_std.withColumn("lower", mean_std_dev("mean") - mean_std_dev("std_dev"))
+                                 .withColumn("upper", mean_std_dev("mean") + mean_std_dev("std_dev"))
 
         // apply_checks(name, dataset, thresholds, session)
         thresholds
