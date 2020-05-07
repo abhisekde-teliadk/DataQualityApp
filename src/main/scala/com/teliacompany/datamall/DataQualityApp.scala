@@ -40,13 +40,15 @@ object DataQualityApp {
 
     println("+++ Suggestions")
     val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
-    stage1.show(100)
+    // stage1.show(100)
     
     println("+++ Metrices Results: " + out_metric) 
     val stage2 = calc_metrics(in_name, df, stage1, spark) // Calulate daily metrices
     stage2.write
         .mode("append")
         .parquet(out_metric)
+
+    if(args(0) == "--execute")
     stage2.show(100)
 
     // Evaluation only steps
@@ -56,7 +58,7 @@ object DataQualityApp {
                   .parquet(out_metric + "/*")
         println("Thresholds for anomaly")
         val stage3 = calc_thresholds(metrics) // Calculate boundaries of acceptable values
-        stage3.show(100)
+        // stage3.show(100)
 
         println("+++ Anomaly Check Results: " + out_checks)
         val stage4 = apply_checks(stage2, stage3) // Anomaly detection by comparing with historical metrices
@@ -97,7 +99,7 @@ object DataQualityApp {
     def apply_checks(metrics: DataFrame, thresholds: DataFrame) = {
         val met_thres = metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
         //return
-        met_thres.withColumn("check_ok", met_thres("value")-met_thres("lower") >= 0.01 && met_thres("upper")-met_thres("value") >= 0.01 ) // 1% margin for floating point errors
+        met_thres.withColumn("check_ok", met_thres("value")-met_thres("lower") <= 0.01 && met_thres("upper")-met_thres("value") <= 0.01 ) // 1% margin for floating point errors
                  .select("name", "instance", "analysis", "check_ok", "value", "lower", "upper", "exec_time")
     }
 
