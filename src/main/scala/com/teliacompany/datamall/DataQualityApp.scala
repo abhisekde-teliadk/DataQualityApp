@@ -126,7 +126,7 @@ object DataQualityApp {
                         .withColumn("exec_time", lit(time_now().toString)) 
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
-        val result = metrics.withColumn("check_status", ((metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))).map(e => {if(e) "OK" else "Not OK"})
+        val result = metrics.withColumn("check_status", (metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper")).map(e => {if(e) "OK" else "Not OK"}))
                             .select("name", "instance", "constraint", "check_status", "lower", "value", "upper", "exec_time")
         // return
         result
