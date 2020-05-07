@@ -24,7 +24,7 @@ object DataQualityApp {
 
     // Validate arguments
     require(args.length == 2 && args(1).startsWith("/") && (args(0) == "--execute" || args(0) == "--check"), 
-            "\nUsage: Requires 2 argument: \n - Execution mode: [--execute | --check]\n - <full path to parquet dataset> \nExample: \nspark2-submit --class \"com.teliacompany.datamall.DataQualityApp\" \\ \n --master yarn \\ \n --conf spark.ui.port=XXXX \\ \n /path/to//dataquality_xxxx.jar <execution_mode> <full path to parquet dataset>\n")
+            "\nUsage: Requires 2 argument: \n - Execution mode: [--execute | --check]\n - <full path to parquet dataset> \nExample: \nspark2-submit --class \"com.teliacompany.datamall.DataQualityApp\" \\ \n --master yarn \\ \n --conf spark.ui.port=XXXX \\ \n /path/to/dataquality_xxxx.jar <execution_mode> <full path to parquet dataset>\n")
 
     val path        = args(1)
     val p_items     = path.split("/")
