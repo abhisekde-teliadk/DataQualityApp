@@ -118,7 +118,7 @@ object DataQualityApp {
     def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
 
         val analysis_std = AnalysisRunner.onData(metrics)
-                            .addAnalyzer(StandardDeviation("instance"))
+                            .addAnalyzer(StandardDeviation("value"))
                             .run()
         val std_devs = successMetricsAsDataFrame(session, analysis_std)
                             .withColumnRenamed("name","analysis")
@@ -126,7 +126,7 @@ object DataQualityApp {
                             .withColumn("name", lit(name))
 
         val analysis_mean = AnalysisRunner.onData(metrics)
-                            .addAnalyzer(Mean("instance"))
+                            .addAnalyzer(Mean("value"))
                             .run()
         val means = successMetricsAsDataFrame(session, analysis_mean)
                             .withColumnRenamed("name","analysis")
