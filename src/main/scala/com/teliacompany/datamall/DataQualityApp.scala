@@ -66,6 +66,7 @@ object DataQualityApp {
             .parquet(out_checks)
         stage4.show(100)  
         }
+    // exit
     spark.stop()
 
     }
