@@ -102,39 +102,38 @@ object DataQualityApp {
             val analysis = e(1).toString
             val lower = e(5).toString.toDouble
             val upper = e(6).toString.toDouble
-            // println("Working on: " + instance + ", " + analysis + ", " + lower + ", " + upper)
+
             if(analysis == "Completeness") {
                 checks.hasCompleteness(instance, _ >= lower)
                 checks.hasCompleteness(instance, _ <= upper)
-                // println(instance + " -> " + "hasCompleteness(" + lower + ", " + upper + ")")
             }
+
             if(analysis == "Uniqueness") {
                 checks.hasDistinctness(Seq(instance), _ >= lower)
                 checks.hasDistinctness(Seq(instance), _ <= upper)
-                // println(instance + " -> " + "hasDistinctness(" + lower + ", " + upper + ")")
             }
+
             if(analysis == "Entropy") {
                 checks.hasEntropy(instance, _ >= lower)
                 checks.hasEntropy(instance, _ <= upper)
-                // println(instance + " -> " + "hasEntropy(" + lower + ", " + upper + ")")
             }
+
             if(analysis == "Size") {
                 checks.hasSize(_ >= lower)
                 checks.hasSize(_ <= upper)
-                // println(name + " -> " + "hasSize(" + lower + ", " + upper + ")")
             }
         })
+        val _checks = Check(CheckLevel.Error, name)
+                            .hasCompleteness("customer_id", _ >= 0.90) 
+                            .hasDistinctness(Seq("review_id"), _ >= 0.90)
+                            .isNonNegative("total_votes") 
+                            .hasStandardDeviation("helpful_votes", _ < 3.0)
+                            .hasEntropy("helpful_votes", _ < 2.0)
+                            .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
 
         val ver_result: VerificationResult = { 
                             VerificationSuite().onData(dataset)
-                                .addCheck(Check(CheckLevel.Error, "Data Validation Check")
-                                    .hasCompleteness("customer_id", _ >= 0.90) 
-                                    .hasDistinctness(Seq("review_id"), _ >= 0.90)
-                                    .isNonNegative("total_votes") 
-                                    .hasStandardDeviation("helpful_votes", _ < 3.0)
-                                    .hasEntropy("helpful_votes", _ < 2.0)
-                                    .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
-                                )
+                                .addCheck(_checks)
                                 .run()
                         }
         // return
