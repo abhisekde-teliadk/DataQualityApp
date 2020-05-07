@@ -125,7 +125,8 @@ object DataQualityApp {
         })
 
         println("Constraints selected: ")
-        checks.constraints.foreach(println)
+        val cons: CheckConstraint = checks
+        cons.getConstraints.foreach(println)
 
         val ver_result: VerificationResult = { 
                             VerificationSuite().onData(dataset)
