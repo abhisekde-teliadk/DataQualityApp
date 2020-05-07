@@ -137,7 +137,7 @@ object DataQualityApp {
         val met_thres = metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
         //return
         met_thres.withColumn("check_ok", met_thres("value") >= met_thres("lower") && met_thres("value") <= met_thres("upper"))
-                 .select("name", "instance", "constraint", "check_ok", "value", "lower", "upper", "exec_time")
+                 .select("name", "instance", "analysis", "check_ok", "value", "lower", "upper", "exec_time")
     }
 
     def calc_thresholds(metrics: DataFrame) = {
