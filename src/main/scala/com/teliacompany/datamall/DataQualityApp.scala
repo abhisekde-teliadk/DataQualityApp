@@ -101,7 +101,7 @@ object DataQualityApp {
                 checks.hasCompleteness(instance, _ <= upper)
                 println(instance + " -> " + "hasCompleteness(" + lower + ", " + upper + ")")
             if(analysis == "Uniqueness")
-                checks.hasUniqueness(instance, n => assert(n >= lower))
+                checks.hasUniqueness(instance, (n) => assert(n >= lower))
                 checks.hasUniqueness(instance, _ <= upper)
                 println(instance + " -> " + "hasUniqueness(" + lower + ", " + upper + ")")
             if(analysis == "Entropy")
