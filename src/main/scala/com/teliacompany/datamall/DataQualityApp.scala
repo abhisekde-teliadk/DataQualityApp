@@ -92,10 +92,10 @@ object DataQualityApp {
         schema.join(sug1, Seq("column", "name"), "inner")
     }
 
-    def apply_checks(name: String, dataset: DataFrame, suggestion: DataFrame, session: SparkSession) = {
+    def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
         var checks = Check(CheckLevel.Error, name)
 
-        suggestions.foreach(e => {
+        thresholds.foreach(e => {
             val instance = e(0)
             val analysis = e(1)
             val lower = e(5)
