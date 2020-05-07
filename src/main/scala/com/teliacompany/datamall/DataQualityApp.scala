@@ -58,7 +58,7 @@ object DataQualityApp {
     // Evaluation only steps
     if(args(0) == "--check") {
         println("Thresholds for anomaly")
-        val stage3 = calc_thresholds(in_name, df, metrics, spark) // Calculate boundaries of acceptable values
+        val stage3 = calc_thresholds(metrics) // Calculate boundaries of acceptable values
         stage3.show(100)
 
         println("+++ Anomaly Check Results: " + out_checks)
@@ -133,13 +133,14 @@ object DataQualityApp {
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
         */
+        
+        val met_thres = metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
         //return
-        metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
-               .withColumn("check_ok", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
-               .select("name", "instance", "constraint", "check_ok", "value", "lower", "upper", "exec_time")
+        met_thres.withColumn("check_ok", met_thres("value") >= met_thres("lower") && met_thres("value") <= met_thres("upper"))
+                 .select("name", "instance", "constraint", "check_ok", "value", "lower", "upper", "exec_time")
     }
 
-    def calc_thresholds(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
+    def calc_thresholds(metrics: DataFrame) = {
 
         val mean_std = metrics.groupBy("instance", "analysis", "name")
                               .agg(avg(col("value")), stddev_pop(col("value")))
@@ -161,18 +162,9 @@ object DataQualityApp {
         val completeness = suggestion.where(suggestion("constraint").startsWith("Completeness"))
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
-        val complete_list = completeness.select("column")
-                                .collect
-                                .map(e => e(0).toString)
-                                .toSeq
-        val compliance_list = compliance.select("column")
-                                .collect
-                                .map(e => e(0).toString)
-                                .toSeq
-        val all_list = suggestion.select("column")
-                            .collect
-                            .map(e => e(0).toString)
-                            .toSeq
+        val complete_list = completeness.select("column").collect.map(e => e(0).toString).toSeq
+        val compliance_list = compliance.select("column").collect.map(e => e(0).toString).toSeq
+
         var runner = AnalysisRunner.onData(dataset)
 
         complete_list.foreach(e => {
