@@ -37,7 +37,7 @@ object DataQualityApp {
 
     println("+++ Suggestions:")
     val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
-    stage1.show()
+    stage1.collect.foreach(println)
 
     println("+++ Check Results:")
     val stage2 = apply_checks(in_name, df, stage1, spark) // Completeness as suggested 
@@ -48,7 +48,7 @@ object DataQualityApp {
     stage3.write
         .mode("append")
         .parquet(out_metric)
-    stage3.show()
+    stage3.collect.foreach(println)
       
     println("+++ Anomaly Check Results:")
     val metrics = spark.read
@@ -59,7 +59,7 @@ object DataQualityApp {
     stage4.write
         .mode("append")
         .parquet(out_checks)
-    stage4.show()   
+    stage4.collect.foreach(println)   
 
     spark.stop()
 
