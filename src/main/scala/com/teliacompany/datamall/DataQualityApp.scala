@@ -95,7 +95,7 @@ object DataQualityApp {
             val analysis = e(1).toString
             val lower = e(5).toString.toDouble
             val upper = e(6).toString.toDouble
-
+            println("Working on: " + instance + ", " + analysis + ", " + lower + ", " + upper)
             if(analysis == "Completeness")
                 checks.hasCompleteness(instance, _ >= lower)
                 checks.hasCompleteness(instance, _ <= upper)
