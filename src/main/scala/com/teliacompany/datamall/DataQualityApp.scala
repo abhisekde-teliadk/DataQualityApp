@@ -38,10 +38,6 @@ object DataQualityApp {
     println("+++ Suggestions")
     val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
     stage1.show(100)
-
-    // println("+++ Check Results:")
-    // val stage2 = apply_checks(in_name, df, stage1, spark) // Completeness as suggested 
-    // stage2.show()
     
     println("+++ Metrices Results: " + out_metric) 
     val stage2 = calc_metrics(in_name, df, stage1, spark) // Metrices
@@ -59,8 +55,7 @@ object DataQualityApp {
     val stage3 = check_anomaly(in_name, df, metrics, spark) // Anomaly detection by comparing with historical metrices
     println("+++ Anomaly Check Results: " + out_checks)
     stage3.write
-        .mode("append")
-        .parquet(out_checks)
+          .parquet(out_checks)
     stage3.show(100)  
 
     spark.stop()
@@ -136,6 +131,8 @@ object DataQualityApp {
         val thresholds = mean_std.withColumn("lower", mean_std("mean") - mean_std("std_dev"))
                                  .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
                                  .where(mean_std("analysis").isNotNull)
+
+        thresholds.show(100)
 
         apply_checks(name, dataset, thresholds, session)
         // thresholds
