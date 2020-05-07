@@ -133,7 +133,7 @@ object DataQualityApp {
                             .withColumnRenamed("value","mean")
                             .withColumn("name", lit(name))
 
-        val mean_std_dev = std_devs.join(means, Seq("instance", "name"), "inner")
+        val mean_std_dev = std_devs.join(means.select("instance", "name", "mean"), Seq("instance", "name"), "inner")
         val thresholds = mean_std_dev.withColumn("lower", mean_std_dev("mean") - mean_std_dev("std_dev"))
                                      .withColumn("lower", mean_std_dev("mean") + mean_std_dev("std_dev"))
 
