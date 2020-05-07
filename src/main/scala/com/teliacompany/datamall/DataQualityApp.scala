@@ -95,6 +95,7 @@ object DataQualityApp {
     }
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
+        import session.implicits._
         val completeness = thresholds.where(thresholds("analysis") === "Completeness")
                                      .select("instance")
                                      .collect
@@ -123,13 +124,13 @@ object DataQualityApp {
         val metrics = successMetricsAsDataFrame(session, analysis)
                         .withColumnRenamed("name","constraint")
                         .withColumn("name", lit(name))
-                        .withColumn("exec_time", lit(time_now().toString)) 
+                        .withColumn("exec_time", lit(time_now().toString))  
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
-        val result = metrics.withColumn("check_status", (metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper")).map(e => {if(e) "OK" else "Not OK"}))
+        val result = metrics.withColumn("check_status", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
                             .select("name", "instance", "constraint", "check_status", "lower", "value", "upper", "exec_time")
         // return
-        result
+        result.map(e => (e(0), e(1), e(2), if(e(3)) "OK" else "Not OK", e(4), e(5), e(6), e(7))).toDF
     }
 
     def calc_thresholds(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
