@@ -22,7 +22,7 @@ object DataQualityApp {
     val spark = SparkSession.builder.appName("DataQualityApp").getOrCreate()
     import spark.implicits._
 
-    // Validate arguments
+    // Validate command line arguments
     require(args.length == 2 && args(1).startsWith("/") && (args(0) == "--execute" || args(0) == "--check"), 
             "\nUsage: Requires 2 argument: \n - Execution mode: [--execute | --check]\n - <full path to parquet dataset> \nExample: \nspark2-submit --class \"com.teliacompany.datamall.DataQualityApp\" \\ \n --master yarn \\ \n --conf spark.ui.port=XXXX \\ \n /path/to/dataquality_xxxx.jar <execution_mode> <full path to parquet dataset>\n")
 
@@ -38,30 +38,29 @@ object DataQualityApp {
                   .option("basePath", path)
                   .parquet(path + "/*")
 
-    println("+++ Suggestions")
     val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
-    // stage1.show(100)
     
-    println("+++ Metrices Results: " + out_metric) 
+    
     val stage2 = calc_metrics(in_name, df, stage1, spark) // Calulate daily metrices
     stage2.write
         .mode("append")
         .parquet(out_metric)
 
-    if(args(0) == "--execute")
-    stage2.show(100)
-
+    if(args(0) == "--execute") {
+        println("+++ Metrices Results: " + out_metric) 
+        stage2.show(100)
+    }
+    
     // Evaluation only steps
     if(args(0) == "--check") {
         val metrics = spark.read
                   .option("basePath", out_metric)
                   .parquet(out_metric + "/*")
-        println("Thresholds for anomaly")
+
         val stage3 = calc_thresholds(metrics) // Calculate boundaries of acceptable values
-        // stage3.show(100)
 
         println("+++ Anomaly Check Results: " + out_checks)
-        val stage4 = apply_checks(stage2, stage3) // Anomaly detection by comparing with historical metrices
+        val stage4 = anomaly_check(stage2, stage3) // Anomaly detection by comparing with historical metrices
         stage4.write
             .mode(SaveMode.Overwrite)
             .parquet(out_checks)
@@ -96,7 +95,7 @@ object DataQualityApp {
         schema.join(sug1, Seq("column", "name"), "inner")
     }
 
-    def apply_checks(metrics: DataFrame, thresholds: DataFrame) = {
+    def anomaly_check(metrics: DataFrame, thresholds: DataFrame) = {
         val met_thres = metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
         //return
         met_thres.withColumn("check_ok", met_thres("value")-met_thres("lower") <= 0.01 && met_thres("upper")-met_thres("value") <= 0.01 ) // 1% margin for floating point errors
@@ -109,10 +108,10 @@ object DataQualityApp {
                               .withColumnRenamed("avg(value)", "mean")
                               .withColumnRenamed("stddev_pop(value)", "std_dev")
 
-        val thresholds = mean_std.withColumn("lower", mean_std("mean") - mean_std("std_dev") - mean_std("std_dev") - mean_std("std_dev")) // mean - stddev*3
-                                 .withColumn("upper", mean_std("mean") + mean_std("std_dev") + mean_std("std_dev") + mean_std("std_dev")) // mean + stddev*3
-                                 .where(mean_std("analysis").isNotNull)
-
+        val thresholds = mean_std.where(mean_std("analysis").isNotNull)
+                                 .withColumn("lower", mean_std("mean") - mean_std("std_dev") - mean_std("std_dev") - mean_std("std_dev")) // mean - stddev*3
+                                 .withColumn("upper", mean_std("mean") + mean_std("std_dev") + mean_std("std_dev") + mean_std("std_dev")) // mean + stddev*3      
+        // return
         thresholds
     }
 
