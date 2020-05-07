@@ -134,7 +134,7 @@ object DataQualityApp {
                         
         */
         //return
-        metrics.withColumnRenamed("analysis","constraint")
+        metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
                .withColumn("check_ok", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
                .select("name", "instance", "constraint", "check_ok", "value", "lower", "upper", "exec_time")
     }
