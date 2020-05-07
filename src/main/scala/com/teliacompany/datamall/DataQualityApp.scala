@@ -124,6 +124,9 @@ object DataQualityApp {
             }
         })
 
+        println("Constraints selected: ")
+        checks.constraints.foreach(println)
+
         val ver_result: VerificationResult = { 
                             VerificationSuite().onData(dataset)
                                 .addCheck(checks)
@@ -133,7 +136,7 @@ object DataQualityApp {
         val result = checkResultsAsDataFrame(session, ver_result)
                         .withColumn("name", lit(name))
                         .withColumn("exec_time", lit(time_now().toString))
-        print("Result rows count: " + result.count.toString)
+
         result
     }
 
