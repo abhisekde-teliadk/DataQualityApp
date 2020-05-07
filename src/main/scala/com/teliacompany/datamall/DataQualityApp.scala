@@ -96,7 +96,7 @@ object DataQualityApp {
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
         val col_list = thresholds.collect
-        
+        /*
         val _checks = Check(CheckLevel.Error, name)
                             .hasCompleteness("customer_id", _ >= 0.90) 
                             .hasDistinctness(Seq("review_id"), _ >= 0.90)
@@ -104,6 +104,24 @@ object DataQualityApp {
                             .hasStandardDeviation("helpful_votes", _ < 3.0)
                             .hasEntropy("helpful_votes", _ < 2.0)
                             .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
+        */
+        var _checks = Check(CheckLevel.Error, name)
+        val l = List(1, 2, 3, 4, 5, 6) 
+        l.foreach(i => {
+            if(i == 1)
+                _checks.hasCompleteness("customer_id", _ >= 0.90) 
+            if(i == 2)
+            _checks.hasDistinctness(Seq("review_id"), _ >= 0.90)
+            if(i == 3)
+                _checks.isNonNegative("total_votes") 
+            if(i == 4)
+                _checks.hasStandardDeviation("helpful_votes", _ < 3.0)
+            if(i == 5)
+                _checks.hasEntropy("helpful_votes", _ < 2.0)
+            if(i == 6)
+                _checks.hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
+        })
+
         var checks = Check(CheckLevel.Error, name)
         col_list.foreach(e => {
                 val instance = e(0).toString
@@ -131,7 +149,7 @@ object DataQualityApp {
                     checks.hasSize(_ <= upper)
                 }
             }
-        )    
+        )   
 
         val ver_result: VerificationResult =  VerificationSuite()
                                                 .onData(dataset)
