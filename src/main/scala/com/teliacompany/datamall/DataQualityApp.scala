@@ -96,8 +96,9 @@ object DataQualityApp {
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
         var checks = Check(CheckLevel.Error, name)
+        val col_list = thresholds.collect
 
-        thresholds.collect.foreach(e => {
+        col_list.foreach(e => {
             val instance = e(0).toString
             val analysis = e(1).toString
             val lower = e(5).toString.toDouble
@@ -133,9 +134,10 @@ object DataQualityApp {
 
         val ver_result: VerificationResult = { 
                             VerificationSuite().onData(dataset)
-                                .addCheck(_checks)
+                                .addCheck(checks)
                                 .run()
                         }
+        println(checks)
         // return
         val result = checkResultsAsDataFrame(session, ver_result)
                         .withColumn("name", lit(name))
