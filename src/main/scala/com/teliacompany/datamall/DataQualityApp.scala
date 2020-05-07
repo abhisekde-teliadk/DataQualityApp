@@ -131,8 +131,8 @@ object DataQualityApp {
         //                    .toDF("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
         
         // return
-        metrics.withColumn("check_ok", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
-               .select("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
+        metrics.withColumn("check_ok", (metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper")).asInstanceOf[String])
+               .select("name", "instance", "constraint", "check_ok", "value", "lower", "upper", "exec_time")
     }
 
     def calc_thresholds(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
