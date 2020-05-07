@@ -10,6 +10,11 @@ import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
 import com.amazon.deequ.checks.{Check, CheckLevel}
 import com.amazon.deequ.checks.Check._
 
+import com.amazon.deequ.analyzers.runners.{AnalysisRunner, AnalyzerContext}
+import com.amazon.deequ.analyzers.runners.AnalyzerContext.successMetricsAsDataFrame
+import com.amazon.deequ.analyzers.{Compliance, Correlation, Size, Completeness, Mean, ApproxCountDistinct, Maximum, Minimum, Entropy, GroupingAnalyzer, Uniqueness}
+
+
 object DataQualityApp {
     def main(args: Array[String]) = {
     val spark = SparkSession.builder.appName("DataQualityApp").getOrCreate()
@@ -24,7 +29,7 @@ object DataQualityApp {
     val in_name     = p_items(p_items.lastIndexOf("data") -1)
     val project     = p_items(p_items.indexOf(in_name) -1)
     val out_checks  = "/data/" + pond + "/checks_" + project + "_" + in_name
-
+    val out_metric  = "/data/" + pond + "/metric_" + project + "_" + in_name
     val df = spark.read
                   .option("basePath", path)
                   .parquet(path + "/*")
@@ -40,6 +45,13 @@ object DataQualityApp {
         .parquet(out_checks)
     stage2.show()
     println("+++ Check Results")
+
+    val stage3 = calc_metrics(in_name, df, stage1, spark) // Metrices
+     stage3.write
+        .mode("append")
+        .parquet(out_metric)
+    stage3.show()
+    println("+++ Metrices Results")   
 
     spark.stop()
 
@@ -76,9 +88,9 @@ object DataQualityApp {
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
         val col_list = completeness.select("column")
-                        .collect
-                        .map(e => e(0).toString)
-                        .toSeq
+                            .collect
+                            .map(e => e(0).toString)
+                            .toSeq
 
         println(col_list)
         println("+++ Column list")
@@ -102,6 +114,44 @@ object DataQualityApp {
 
     def time_now() = {
         new java.sql.Timestamp(System.currentTimeMillis())
+    }
+
+    def calc_metrics(name: String, dataset: DataFrame, suggestion: DataFrame, session: SparkSession) = {
+        val completeness = suggestion.where(suggestion("constraint").startsWith("Completeness"))
+        val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
+
+        val complete_list = completeness.select("column")
+                                .collect
+                                .map(e => e(0).toString)
+                                .toSeq
+
+        val compliance_list = compliance.select("column")
+                                .collect
+                                .map(e => e(0).toString)
+                                .toSeq
+
+        val all_list = suggestion.select("column")
+                            .collect
+                            .map(e => e(0).toString)
+                            .toSeq
+
+        var runner = AnalysisRunner.onData(dataset)
+
+        complete_list.foreach(e => {
+            runner.addAnalyzer(Completeness(e))
+            runner.addAnalyzer(Uniqueness(e))
+            }
+        )
+        compliance_list.foreach(e => runner.addAnalyzer(Entropy(e)))
+
+        runner.addAnalyzer(Size())
+
+        val analysis: AnalyzerContext = runner.run()
+
+        successMetricsAsDataFrame(session, result)
+            .withColumn("name", lit(name))
+            .withColumn("dml_time", lit(time_now().toString)) 
+        
     }
 }
 
