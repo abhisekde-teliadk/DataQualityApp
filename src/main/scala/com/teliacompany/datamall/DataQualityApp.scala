@@ -41,7 +41,7 @@ object DataQualityApp {
     stage1.show(100)
     
     println("+++ Metrices Results: " + out_metric) 
-    val stage2 = calc_metrics(in_name, df, stage1, spark) // Metrices
+    val stage2 = calc_metrics(in_name, df, stage1, spark) // Calulate daily metrices
     stage2.write
         .mode("append")
         .parquet(out_metric)
@@ -53,12 +53,16 @@ object DataQualityApp {
     val rows = metrics.count
     println("Metrices record count: " + rows.toString)
 
-    val stage3 = check_anomaly(in_name, df, metrics, spark) // Anomaly detection by comparing with historical metrices
+    println("Thresholds for anomaly: ")
+    val stage3 = calc_thresholds(in_name, df, metrics, spark) // Calculate boundaries of acceptable values
+    stage3.show(100)
+
     println("+++ Anomaly Check Results: " + out_checks)
-    stage3.write
+    val stage4 = apply_checks(name, dataset, stage3, spark) // Anomaly detection by comparing with historical metrices
+    stage4.write
           .mode(SaveMode.Overwrite)
           .parquet(out_checks)
-    stage3.show(100)  
+    stage4.show(100)  
 
     spark.stop()
 
@@ -90,38 +94,33 @@ object DataQualityApp {
     }
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
-        println("Thresholds for anomaly: ")
-        thresholds.show(100)
-        val rows = thresholds.count
-        println("Thresholds record count: " + rows.toString)
-
         var checks = Check(CheckLevel.Error, name)
-        println("Checks applied:")
+
         thresholds.collect.foreach(e => {
             val instance = e(0).toString
             val analysis = e(1).toString
             val lower = e(5).toString.toDouble
             val upper = e(6).toString.toDouble
-            println("Working on: " + instance + ", " + analysis + ", " + lower + ", " + upper)
+            // println("Working on: " + instance + ", " + analysis + ", " + lower + ", " + upper)
             if(analysis == "Completeness") {
                 checks.hasCompleteness(instance, _ >= lower)
                 checks.hasCompleteness(instance, _ <= upper)
-                println(instance + " -> " + "hasCompleteness(" + lower + ", " + upper + ")")
+                // println(instance + " -> " + "hasCompleteness(" + lower + ", " + upper + ")")
             }
             if(analysis == "Uniqueness") {
                 checks.hasDistinctness(Seq(instance), _ >= lower)
                 checks.hasDistinctness(Seq(instance), _ <= upper)
-                println(instance + " -> " + "hasDistinctness(" + lower + ", " + upper + ")")
+                // println(instance + " -> " + "hasDistinctness(" + lower + ", " + upper + ")")
             }
             if(analysis == "Entropy") {
                 checks.hasEntropy(instance, _ >= lower)
                 checks.hasEntropy(instance, _ <= upper)
-                println(instance + " -> " + "hasEntropy(" + lower + ", " + upper + ")")
+                // println(instance + " -> " + "hasEntropy(" + lower + ", " + upper + ")")
             }
             if(analysis == "Size") {
                 checks.hasSize(_ >= lower)
                 checks.hasSize(_ <= upper)
-                println(name + " -> " + "hasSize(" + lower + ", " + upper + ")")
+                // println(name + " -> " + "hasSize(" + lower + ", " + upper + ")")
             }
         })
 
@@ -131,12 +130,14 @@ object DataQualityApp {
                                 .run()
                         }
         // return
-        checkResultsAsDataFrame(session, ver_result)
-            .withColumn("name", lit(name))
-            .withColumn("exec_time", lit(time_now().toString))
+        val result = checkResultsAsDataFrame(session, ver_result)
+                        .withColumn("name", lit(name))
+                        .withColumn("exec_time", lit(time_now().toString))
+        print("Result rows count: " + result.count.toString)
+        result
     }
 
-    def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
+    def calc_thresholds(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
 
         val mean_std = metrics.groupBy("instance", "analysis", "name")
                               .agg(avg(col("value")), stddev_pop(col("value")))
@@ -147,8 +148,7 @@ object DataQualityApp {
                                  .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
                                  .where(mean_std("analysis").isNotNull)
 
-        apply_checks(name, dataset, thresholds, session)
-        // thresholds
+        thresholds
     }
 
     def time_now() = {
