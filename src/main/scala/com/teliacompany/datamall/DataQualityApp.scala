@@ -98,8 +98,8 @@ object DataQualityApp {
         thresholds.foreach(e => {
             val instance = e(0).toString
             val analysis = e(1).toString
-            val lower = e(5).toString.toLong
-            val upper = e(6).toString.toLong
+            val lower = e(5).toString.toDouble
+            val upper = e(6).toString.toDouble
 
             if(analysis == "Completeness")
                 checks.hasCompleteness(instance, _ >= lower)
