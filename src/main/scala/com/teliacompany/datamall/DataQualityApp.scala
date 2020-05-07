@@ -130,7 +130,7 @@ object DataQualityApp {
         val result = metrics.withColumn("check_status", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
                             .select("name", "instance", "constraint", "check_status", "lower", "value", "upper", "exec_time")
         // return
-        result.map(e => (e(0), e(1), e(2), if(e(3)) "OK" else "Not OK", e(4), e(5), e(6), e(7))).toDF
+        result.map(e => (e(0), e(1), e(2), if(e(3).toString == "true") "OK" else "Not OK", e(4), e(5), e(6), e(7))).toDF
     }
 
     def calc_thresholds(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
