@@ -124,13 +124,16 @@ object DataQualityApp {
             }
         })
 
-        println("Constraints selected: ")
-        val cons: CheckConstraint = checks
-        cons.getConstraints.foreach(println)
-
         val ver_result: VerificationResult = { 
                             VerificationSuite().onData(dataset)
-                                .addCheck(checks)
+                                .addCheck(Check(CheckLevel.Error, "Data Validation Check")
+                                    .hasCompleteness("customer_id", _ >= 0.90) 
+                                    .hasUniqueness("review_id", _ >= 0.90)
+                                    .isNonNegative("total_votes") 
+                                    .hasStandardDeviation("helpful_votes", _ < 3.0)
+                                    .hasEntropy("helpful_votes", _ < 2.0)
+                                    .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
+                                )
                                 .run()
                         }
         // return
