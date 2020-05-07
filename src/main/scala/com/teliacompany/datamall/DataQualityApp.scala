@@ -58,7 +58,7 @@ object DataQualityApp {
     stage3.show(100)
 
     println("+++ Anomaly Check Results: " + out_checks)
-    val stage4 = apply_checks(name, dataset, stage3, spark) // Anomaly detection by comparing with historical metrices
+    val stage4 = apply_checks(in_name, df, stage3, spark) // Anomaly detection by comparing with historical metrices
     stage4.write
           .mode(SaveMode.Overwrite)
           .parquet(out_checks)
