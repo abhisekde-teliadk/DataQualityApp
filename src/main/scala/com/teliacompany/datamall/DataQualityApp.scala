@@ -35,31 +35,33 @@ object DataQualityApp {
                   .option("basePath", path)
                   .parquet(path + "/*")
 
-    println("+++ Suggestions:")
+    println("+++ Suggestions")
     val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
-    stage1.collect.foreach(println)
+    stage1.show(100)
 
-    println("+++ Check Results:")
-    val stage2 = apply_checks(in_name, df, stage1, spark) // Completeness as suggested 
-    stage2.show()
+    // println("+++ Check Results:")
+    // val stage2 = apply_checks(in_name, df, stage1, spark) // Completeness as suggested 
+    // stage2.show()
     
-    println("+++ Metrices Results:") 
-    val stage3 = calc_metrics(in_name, df, stage1, spark) // Metrices
-    stage3.write
+    println("+++ Metrices Results: " + out_metric) 
+    val stage2 = calc_metrics(in_name, df, stage1, spark) // Metrices
+    stage2.write
         .mode("append")
         .parquet(out_metric)
-    stage3.collect.foreach(println)
+    stage2.show(100)
       
-    println("+++ Anomaly Check Results:")
     val metrics = spark.read
                   .option("basePath", out_metric)
                   .parquet(out_metric + "/*")
+    val rows = metrics.count
+    println("Metrices record count: " + rows.toString)
 
-    val stage4 = check_anomaly(in_name, df, metrics, spark) // Anomaly detection by comparing with historical metrices
-    stage4.write
+    val stage3 = check_anomaly(in_name, df, metrics, spark) // Anomaly detection by comparing with historical metrices
+    println("+++ Anomaly Check Results: " + out_checks)
+    stage3.write
         .mode("append")
         .parquet(out_checks)
-    stage4.collect.foreach(println)   
+    stage3.show(100)  
 
     spark.stop()
 
@@ -91,19 +93,28 @@ object DataQualityApp {
     }
 
     def apply_checks(name: String, dataset: DataFrame, suggestion: DataFrame, session: SparkSession) = {
+        var checks = Check(CheckLevel.Error, name)
 
-        val completeness = suggestion.where(suggestion("constraint").startsWith("Completeness"))
-        val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
+        suggestions.foreach(e => {
+            val instance = e(0)
+            val analysis = e(1)
+            val lower = e(5)
+            val upper = e(6)
 
-        val col_list = completeness.select("column")
-                            .collect
-                            .map(e => e(0).toString)
-                            .toSeq
+            if(analysis == "Completeness")
+                checks.hasCompleteness(instance, _ >= lower)
+                checks.hasCompleteness(instance, _ <= upper)
+            if(analysis == "Uniqueness")
+                checks.hasEntropy(instance, _ >= lower)
+                checks.hasEntropy(instance, _ <= upper)
+            if(analysis == "Entropy")
+                checks.hasCompleteness(instance, _ >= lower)
+                checks.hasCompleteness(instance, _ <= upper)
+            if(analysis == "Size")
+                checks.hasSize(_ >= lower)
+                checks.hasSize(_ <= upper)
+        })
 
-        println(col_list)
-        println("+++ Column list")
-
-        var checks = Check(CheckLevel.Error, "Data Validation Check").haveCompleteness(col_list, _ >= 0.99) // 99% rows of each columns are populated
         val result: VerificationResult = { 
             VerificationSuite().onData(dataset)
                 .addCheck(checks)
@@ -125,8 +136,8 @@ object DataQualityApp {
         val thresholds = mean_std.withColumn("lower", mean_std("mean") - mean_std("std_dev"))
                                  .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
 
-        // apply_checks(name, dataset, thresholds, session)
-        thresholds.where(thresholds("analysis").isNotNull)
+        apply_checks(name, dataset, thresholds, session)
+        // thresholds.where(thresholds("analysis").isNotNull)
     }
 
     def time_now() = {
