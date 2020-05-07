@@ -62,7 +62,7 @@ object DataQualityApp {
         stage3.show(100)
 
         println("+++ Anomaly Check Results: " + out_checks)
-        val stage4 = apply_checks(in_name, stage2, stage3, spark) // Anomaly detection by comparing with historical metrices
+        val stage4 = apply_checks(stage2, stage3) // Anomaly detection by comparing with historical metrices
         stage4.write
             .mode(SaveMode.Overwrite)
             .parquet(out_checks)
@@ -98,42 +98,7 @@ object DataQualityApp {
         schema.join(sug1, Seq("column", "name"), "inner")
     }
 
-    def apply_checks(name: String, metrics: DataFrame, thresholds: DataFrame, session: SparkSession) = {
-        /*
-        import session.implicits._
-        val completeness = thresholds.where(thresholds("analysis") === "Completeness")
-                                     .select("instance")
-                                     .collect
-                                     .map(e => e(0).toString)
-                                     .toSeq
-        val entropy = thresholds.where(thresholds("analysis") === "Entropy" )
-                                .select("instance")
-                                .collect
-                                .map(e => e(0).toString)
-                                .toSeq
-        val uniqueness  = thresholds.where(thresholds("analysis") === "Uniqueness" )
-                                .select("instance")
-                                .collect
-                                .map(e => e(0).toString)
-                                .toSeq           
-
-        var runner = AnalysisRunner.onData(dataset)
-
-        completeness.foreach(e => runner.addAnalyzer(Completeness(e)))
-        entropy.foreach(e => runner.addAnalyzer(Entropy(e)))
-        uniqueness.foreach(e => runner.addAnalyzer(Uniqueness(e)))
-        runner.addAnalyzer(Size())
-
-        val analysis: AnalyzerContext = runner.run()
-
-        val metrics = successMetricsAsDataFrame(session, analysis)
-                        .withColumnRenamed("name","constraint")
-                        .withColumn("name", lit(name))
-                        .withColumn("exec_time", lit(time_now().toString))  
-                        .join(thresholds, Seq("name", "instance"), "inner")
-                        
-        */
-        
+    def apply_checks(metrics: DataFrame, thresholds: DataFrame) = {
         val met_thres = metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
         //return
         met_thres.withColumn("check_ok", met_thres("value") >= met_thres("lower") && met_thres("value") <= met_thres("upper"))
@@ -141,7 +106,6 @@ object DataQualityApp {
     }
 
     def calc_thresholds(metrics: DataFrame) = {
-
         val mean_std = metrics.groupBy("instance", "analysis", "name")
                               .agg(avg(col("value")), stddev_pop(col("value")))
                               .withColumnRenamed("avg(value)", "mean")
