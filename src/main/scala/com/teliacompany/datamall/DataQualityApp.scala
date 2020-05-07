@@ -137,7 +137,7 @@ object DataQualityApp {
                                 .addCheck(checks)
                                 .run()
                         }
-        println(checks)
+        println(checks.productElement(2))
         // return
         val result = checkResultsAsDataFrame(session, ver_result)
                         .withColumn("name", lit(name))
