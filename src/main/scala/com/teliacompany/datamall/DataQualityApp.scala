@@ -127,7 +127,7 @@ object DataQualityApp {
                         .withColumn("exec_time", lit(time_now().toString))  
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
-        val result = metrics.map(e => ( e(4), e(1), e(2), if(e(3) >= e(11) && e(3) <= e(12) "OK" else "Not OK", e(3), e(11), e(12), e(5) ) )
+        val result = metrics.map(e => (e(4), e(1), e(2), if(e(3) >= e(11) && e(3) <= e(12))"OK" else "Not OK", e(3), e(11), e(12), e(5)))
                             .toDF("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
         
         // return
