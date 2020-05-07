@@ -131,7 +131,8 @@ object DataQualityApp {
         //                    .toDF("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
         
         // return
-        metrics
+        metrics.withColumn("check_status", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
+               .select("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
               
     }
 
