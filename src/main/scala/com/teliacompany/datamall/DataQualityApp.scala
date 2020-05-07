@@ -64,7 +64,7 @@ object DataQualityApp {
           .mode(SaveMode.Overwrite)
           .parquet(out_checks)
     stage4.show(100)  
-
+    stage4.printSchema
     spark.stop()
 
     }
@@ -127,11 +127,11 @@ object DataQualityApp {
                         .withColumn("exec_time", lit(time_now().toString))  
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
-        val result = metrics.map(e => (e(4), e(1), e(2), if(e(3).toString.toDouble >= e(11).toString.toDouble && e(3).toString.toDouble <= e(12).toString.toDouble) "OK" else "Not OK", e(3), e(11), e(12), e(5)))
-                            .toDF("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
+        //val result = metrics.map(e => (e(4), e(1), e(2), if(e(3).toString.toDouble >= e(11).toString.toDouble && e(3).toString.toDouble <= e(12).toString.toDouble) "OK" else "Not OK", e(3), e(11), e(12), e(5)))
+        //                    .toDF("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
         
         // return
-        result
+        metrics
               
     }
 
