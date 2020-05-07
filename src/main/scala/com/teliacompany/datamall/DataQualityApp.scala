@@ -126,7 +126,7 @@ object DataQualityApp {
                                  .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
 
         // apply_checks(name, dataset, thresholds, session)
-        thresholds.where(thresholds("analysis") != null)
+        thresholds.where(thresholds("analysis").isNotNull)
     }
 
     def time_now() = {
