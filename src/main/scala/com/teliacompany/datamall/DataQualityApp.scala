@@ -103,22 +103,26 @@ object DataQualityApp {
             val lower = e(5).toString.toDouble
             val upper = e(6).toString.toDouble
             println("Working on: " + instance + ", " + analysis + ", " + lower + ", " + upper)
-            if(analysis == "Completeness")
+            if(analysis == "Completeness") {
                 checks.hasCompleteness(instance, _ >= lower)
                 checks.hasCompleteness(instance, _ <= upper)
                 println(instance + " -> " + "hasCompleteness(" + lower + ", " + upper + ")")
-            if(analysis == "Uniqueness")
+            }
+            if(analysis == "Uniqueness") {
                 checks.hasDistinctness(Seq(instance), _ >= lower)
                 checks.hasDistinctness(Seq(instance), _ <= upper)
                 println(instance + " -> " + "hasDistinctness(" + lower + ", " + upper + ")")
-            if(analysis == "Entropy")
+            }
+            if(analysis == "Entropy") {
                 checks.hasEntropy(instance, _ >= lower)
                 checks.hasEntropy(instance, _ <= upper)
                 println(instance + " -> " + "hasEntropy(" + lower + ", " + upper + ")")
-            if(analysis == "Size")
+            }
+            if(analysis == "Size") {
                 checks.hasSize(_ >= lower)
                 checks.hasSize(_ <= upper)
                 println(name + " -> " + "hasSize(" + lower + ", " + upper + ")")
+            }
         })
 
         val ver_result: VerificationResult = { 
