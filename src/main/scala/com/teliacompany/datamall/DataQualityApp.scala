@@ -22,10 +22,9 @@ object DataQualityApp {
     val spark = SparkSession.builder.appName("DataQualityApp").getOrCreate()
     import spark.implicits._
 
-    // if (args.length == 0)
-    //     throw new Exception("No dataset provided. Please pass path of a dataset as argument.")
+    // Validate arguments
     require(args.length == 2 && args(1).startsWith("/") && (args(0) == "--execute" || args(0) == "--check"), 
-            "Usage: Requires 2 argument: \n - Execution mode: [--execute | --check]\n - <full path to parquet dataset> \nspark2-submit --class \"com.teliacompany.datamall.DataQualityApp\" \\ \n --master yarn \\ \n --conf spark.ui.port=XXXX \\ \n /path/to//dataquality_xxxx.jar <execution_mode> <full path to parquet dataset>\n")
+            "\nUsage: Requires 2 argument: \n - Execution mode: [--execute | --check]\n - <full path to parquet dataset> \nExample: \nspark2-submit --class \"com.teliacompany.datamall.DataQualityApp\" \\ \n --master yarn \\ \n --conf spark.ui.port=XXXX \\ \n /path/to//dataquality_xxxx.jar <execution_mode> <full path to parquet dataset>\n")
 
     val path        = args(1)
     val p_items     = path.split("/")
@@ -55,7 +54,8 @@ object DataQualityApp {
                   .parquet(out_metric + "/*")
     val rows = metrics.count
     println("Metrices record count: " + rows.toString)
-    
+
+    // Evaluation only steps
     if(args(0) == "--check") {
         println("Thresholds for anomaly")
         val stage3 = calc_thresholds(in_name, df, metrics, spark) // Calculate boundaries of acceptable values
