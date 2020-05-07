@@ -50,7 +50,7 @@ object DataQualityApp {
      stage3.write
         .mode("append")
         .parquet(out_metric)
-    stage3.show()
+    stage3.collect.foreach(println)
     println("+++ Metrices Results")   
 
     spark.stop()
@@ -107,7 +107,7 @@ object DataQualityApp {
             .withColumn("exec_time", lit(time_now().toString))
     }
 
-    // def check_anomaly(in_name: String, df: DataFrame, stage3: DataFrame) = {
+    // def check_anomaly(metrics: DataFrame, , session: SparkSession) = {
     //    
     // }
 
