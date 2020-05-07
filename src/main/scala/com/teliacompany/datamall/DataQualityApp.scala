@@ -62,7 +62,7 @@ object DataQualityApp {
         stage3.show(100)
 
         println("+++ Anomaly Check Results: " + out_checks)
-        val stage4 = apply_checks(in_name, df, stage3, spark) // Anomaly detection by comparing with historical metrices
+        val stage4 = apply_checks(in_name, stage2, stage3, spark) // Anomaly detection by comparing with historical metrices
         stage4.write
             .mode(SaveMode.Overwrite)
             .parquet(out_checks)
@@ -98,7 +98,8 @@ object DataQualityApp {
         schema.join(sug1, Seq("column", "name"), "inner")
     }
 
-    def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
+    def apply_checks(name: String, metrics: DataFrame, thresholds: DataFrame, session: SparkSession) = {
+        /*
         import session.implicits._
         val completeness = thresholds.where(thresholds("analysis") === "Completeness")
                                      .select("instance")
@@ -131,9 +132,10 @@ object DataQualityApp {
                         .withColumn("exec_time", lit(time_now().toString))  
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
-        
+        */
         //return
-        metrics.withColumn("check_ok", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
+        metrics.withColumnRenamed("analysis","constraint")
+               .withColumn("check_ok", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
                .select("name", "instance", "constraint", "check_ok", "value", "lower", "upper", "exec_time")
     }
 
