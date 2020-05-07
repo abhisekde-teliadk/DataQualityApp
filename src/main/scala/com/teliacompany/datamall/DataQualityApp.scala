@@ -55,6 +55,7 @@ object DataQualityApp {
     val stage3 = check_anomaly(in_name, df, metrics, spark) // Anomaly detection by comparing with historical metrices
     println("+++ Anomaly Check Results: " + out_checks)
     stage3.write
+          .mode(SaveMode.Overwrite)
           .parquet(out_checks)
     stage3.show(100)  
 
@@ -88,6 +89,11 @@ object DataQualityApp {
     }
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
+        println("Thresholds for anomaly: ")
+        thresholds.show(100)
+        val rows = thresholds.count
+        println("Thresholds record count: " + rows.toString)
+
         var checks = Check(CheckLevel.Error, name)
         println("Checks applied:")
         thresholds.foreach(e => {
@@ -114,15 +120,18 @@ object DataQualityApp {
                 println(name + " -> " + "hasSize(" + lower + ", " + upper + ")")
         })
 
-        val result: VerificationResult = { 
-            VerificationSuite().onData(dataset)
-                .addCheck(checks)
-                .run()
-        }
+        val ver_result: VerificationResult = { 
+                            VerificationSuite().onData(dataset)
+                                .addCheck(checks)
+                                .run()
+                        }
         // return
-        checkResultsAsDataFrame(session, result)
-            .withColumn("name", lit(name))
-            .withColumn("exec_time", lit(time_now().toString))
+        val result =  checkResultsAsDataFrame(session, ver_result)
+                            .withColumn("name", lit(name))
+                            .withColumn("exec_time", lit(time_now().toString))
+        println("Final result: ")
+        result.show(100)
+        result
     }
 
     def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
@@ -135,8 +144,6 @@ object DataQualityApp {
         val thresholds = mean_std.withColumn("lower", mean_std("mean") - mean_std("std_dev"))
                                  .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
                                  .where(mean_std("analysis").isNotNull)
-
-        thresholds.show(100)
 
         apply_checks(name, dataset, thresholds, session)
         // thresholds
