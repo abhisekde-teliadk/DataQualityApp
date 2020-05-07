@@ -12,7 +12,7 @@ import com.amazon.deequ.checks.Check._
 
 import com.amazon.deequ.analyzers.runners.{AnalysisRunner, AnalyzerContext}
 import com.amazon.deequ.analyzers.runners.AnalyzerContext.successMetricsAsDataFrame
-import com.amazon.deequ.analyzers.{Compliance, Correlation, Size, Completeness, Mean, ApproxCountDistinct, Maximum, Minimum, Entropy, GroupingAnalyzer, Uniqueness}
+import com.amazon.deequ.analyzers._ // {StandardDeviation, Compliance, Correlation, Size, Completeness, Mean, ApproxCountDistinct, Maximum, Minimum, Entropy, GroupingAnalyzer, Uniqueness}
 
 
 object DataQualityApp {
