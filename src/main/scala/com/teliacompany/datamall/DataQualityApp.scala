@@ -144,8 +144,8 @@ object DataQualityApp {
                               .withColumnRenamed("avg(value)", "mean")
                               .withColumnRenamed("stddev_pop(value)", "std_dev")
 
-        val thresholds = mean_std.withColumn("lower", mean_std("std_dev") - (3 * mean_std("mean"))) // mean - stddev*3
-                                 .withColumn("upper", mean_std("std_dev")) + (3 * mean_std("mean")) // mean + stddev*3
+        val thresholds = mean_std.withColumn("lower", mean_std("mean") - (3 * mean_std("std_dev"))) // mean - stddev*3
+                                 .withColumn("upper", mean_std("mean")) + (3 * mean_std("std_dev")) // mean + stddev*3
                                  .where(mean_std("analysis").isNotNull)
 
         thresholds
