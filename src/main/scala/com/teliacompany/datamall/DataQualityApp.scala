@@ -21,7 +21,7 @@ object DataQualityApp {
     import spark.implicits._
 
     if (args.length == 0)
-        throw new Exception("No dataset provided. Please pass a fully qualified path of a dataset as argument.")
+        throw new Exception("No dataset provided. Please pass path of a dataset as argument.")
 
     val path        = args(0)
     val p_items     = path.split("/")
@@ -30,28 +30,36 @@ object DataQualityApp {
     val project     = p_items(p_items.indexOf(in_name) -1)
     val out_checks  = "/data/" + pond + "/checks_" + project + "_" + in_name
     val out_metric  = "/data/" + pond + "/metric_" + project + "_" + in_name
+
     val df = spark.read
                   .option("basePath", path)
                   .parquet(path + "/*")
 
+    println("+++ Suggestions:")
     val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
     stage1.show()
-    println("+++ Suggestions")
 
+    println("+++ Check Results:")
     val stage2 = apply_checks(in_name, df, stage1, spark) // Completeness as suggested 
-    // Write down stats
-    stage2.write
-        .mode("append")
-        .parquet(out_checks)
     stage2.show()
-    println("+++ Check Results")
-
+    
+    println("+++ Metrices Results:") 
     val stage3 = calc_metrics(in_name, df, stage1, spark) // Metrices
-     stage3.write
+    stage3.write
         .mode("append")
         .parquet(out_metric)
-    stage3.collect.foreach(println)
-    println("+++ Metrices Results")   
+    stage3.show()
+      
+    println("+++ Anomaly Check Results:")
+    val metrics = spark.read
+                  .option("basePath", out_metric)
+                  .parquet(out_metric + "/*")
+
+    val stage4 = check_anomaly(in_name, df, metrics, spark) // Anomaly detection by comparing with historical metrices
+    stage4.write
+        .mode("append")
+        .parquet(out_checks)
+    stage4.show()   
 
     spark.stop()
 
@@ -107,9 +115,30 @@ object DataQualityApp {
             .withColumn("exec_time", lit(time_now().toString))
     }
 
-    // def check_anomaly(metrics: DataFrame, , session: SparkSession) = {
-    //    
-    // }
+    def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
+
+        val analysis_std = AnalysisRunner.onData(metrics)
+                            .addAnalyzer(StandardDeviation("instance"))
+                            .run()
+        val std_devs = successMetricsAsDataFrame(session, analysis_std)
+                            .withColumnRenamed("name","analysis")
+                            .withColumnRenamed("value","std_dev")
+
+        val analysis_mean = AnalysisRunner.onData(metrics)
+                            .addAnalyzer(Mean("instance"))
+                            .run()
+        val means = successMetricsAsDataFrame(session, analysis_mean)
+                            .withColumnRenamed("name","analysis")
+                            .withColumnRenamed("value","mean")
+
+        val mean_std_dev = std_devs.join(analysis_mean, Seq("instance", "name"), "inner")
+        
+        val thresholds = mean_std_dev.withColumn("lower", mean_std_dev("mean") - mean_std_dev("std_dev"))
+                                     .withColumn("lower", mean_std_dev("mean") + mean_std_dev("std_dev"))
+
+        // apply_checks(name, dataset, thresholds, session)
+        thresholds
+    }
 
     def time_now() = {
         new java.sql.Timestamp(System.currentTimeMillis())
@@ -147,7 +176,5 @@ object DataQualityApp {
             .withColumnRenamed("name","analysis")
             .withColumn("name", lit(name))
             .withColumn("exec_time", lit(time_now().toString)) 
-            // .withColumnRenamed("instance","column")
     }
 }
-
