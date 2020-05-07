@@ -96,7 +96,6 @@ object DataQualityApp {
         println("+++ Column list")
 
         var checks = Check(CheckLevel.Error, "Data Validation Check").haveCompleteness(col_list, _ >= 0.99) // 99% rows of each columns are populated
-        
         val result: VerificationResult = { 
             VerificationSuite().onData(dataset)
                 .addCheck(checks)
@@ -124,17 +123,14 @@ object DataQualityApp {
                                 .collect
                                 .map(e => e(0).toString)
                                 .toSeq
-
         val compliance_list = compliance.select("column")
                                 .collect
                                 .map(e => e(0).toString)
                                 .toSeq
-
         val all_list = suggestion.select("column")
                             .collect
                             .map(e => e(0).toString)
                             .toSeq
-
         var runner = AnalysisRunner.onData(dataset)
 
         complete_list.foreach(e => {
@@ -143,12 +139,11 @@ object DataQualityApp {
             }
         )
         compliance_list.foreach(e => runner.addAnalyzer(Entropy(e)))
-
         runner.addAnalyzer(Size())
 
         val analysis: AnalyzerContext = runner.run()
-
-        successMetricsAsDataFrame(session, result)
+        // return
+        successMetricsAsDataFrame(session, analysis)
             .withColumn("name", lit(name))
             .withColumn("dml_time", lit(time_now().toString)) 
         
