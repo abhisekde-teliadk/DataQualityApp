@@ -95,35 +95,8 @@ object DataQualityApp {
     }
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
-        var checks = Check(CheckLevel.Error, name)
         val col_list = thresholds.collect
-
-        col_list.foreach(e => {
-            val instance = e(0).toString
-            val analysis = e(1).toString
-            val lower = e(5).toString.toDouble
-            val upper = e(6).toString.toDouble
-
-            if(analysis == "Completeness") {
-                checks.hasCompleteness(instance, _ >= lower)
-                checks.hasCompleteness(instance, _ <= upper)
-            }
-
-            if(analysis == "Uniqueness") {
-                checks.hasDistinctness(Seq(instance), _ >= lower)
-                checks.hasDistinctness(Seq(instance), _ <= upper)
-            }
-
-            if(analysis == "Entropy") {
-                checks.hasEntropy(instance, _ >= lower)
-                checks.hasEntropy(instance, _ <= upper)
-            }
-
-            if(analysis == "Size") {
-                checks.hasSize(_ >= lower)
-                checks.hasSize(_ <= upper)
-            }
-        })
+        
         val _checks = Check(CheckLevel.Error, name)
                             .hasCompleteness("customer_id", _ >= 0.90) 
                             .hasDistinctness(Seq("review_id"), _ >= 0.90)
@@ -131,13 +104,40 @@ object DataQualityApp {
                             .hasStandardDeviation("helpful_votes", _ < 3.0)
                             .hasEntropy("helpful_votes", _ < 2.0)
                             .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
+        var checks = Check(CheckLevel.Error, name)
+        col_list.foreach(e => {
+                val instance = e(0).toString
+                val analysis = e(1).toString
+                val lower = e(5).toString.toDouble
+                val upper = e(6).toString.toDouble
 
-        val ver_result: VerificationResult = { 
-                            VerificationSuite().onData(dataset)
-                                .addCheck(checks)
-                                .run()
-                        }
-        println(checks.productElement(2))
+                if(analysis == "Completeness") {
+                    checks.hasCompleteness(instance, _ >= lower)
+                    checks.hasCompleteness(instance, _ <= upper)
+                }
+
+                if(analysis == "Uniqueness") {
+                    checks.hasDistinctness(Seq(instance), _ >= lower)
+                    checks.hasDistinctness(Seq(instance), _ <= upper)
+                }
+
+                if(analysis == "Entropy") {
+                    checks.hasEntropy(instance, _ >= lower)
+                    checks.hasEntropy(instance, _ <= upper)
+                }
+
+                if(analysis == "Size") {
+                    checks.hasSize(_ >= lower)
+                    checks.hasSize(_ <= upper)
+                }
+            }
+        )    
+
+        val ver_result: VerificationResult =  VerificationSuite()
+                                                .onData(dataset)
+                                                .addCheck(_checks)
+                                                .run()        
+        println(_checks.productElement(2))
         // return
         val result = checkResultsAsDataFrame(session, ver_result)
                         .withColumn("name", lit(name))
