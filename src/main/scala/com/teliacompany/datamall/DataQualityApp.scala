@@ -127,11 +127,12 @@ object DataQualityApp {
                         .withColumn("exec_time", lit(time_now().toString))  
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
-        val result = metrics.withColumn("check_status", metrics("value") >= metrics("lower") && metrics("value") <= metrics("upper"))
-                            .select("name", "instance", "constraint", "check_status", "lower", "value", "upper", "exec_time")
+        val result = metrics.map(e => ( e(4), e(1), e(2), if(e(3) >= e(11) && e(3) <= e(12) "OK" else "Not OK", e(3), e(11), e(12), e(5) ) )
+                            .toDF("name", "instance", "constraint", "check_status", "value", "lower", "upper", "exec_time")
+        
         // return
-        result.map(e => (e(0), e(1), e(2), if(e(3).toString == "true") "OK" else "Not OK", e(4), e(5), e(6), e(7)))
-              .toDF("name", "instance", "constraint", "check_status", "lower", "value", "upper", "exec_time")
+        result
+              
     }
 
     def calc_thresholds(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
