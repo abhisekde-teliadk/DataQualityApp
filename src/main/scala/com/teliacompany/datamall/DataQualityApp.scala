@@ -121,13 +121,13 @@ object DataQualityApp {
         val analysis: AnalyzerContext = runner.run()
 
         val metrics = successMetricsAsDataFrame(session, analysis)
-                        .withColumnRenamed("name","analysis")
+                        .withColumnRenamed("name","constraint")
                         .withColumn("name", lit(name))
                         .withColumn("exec_time", lit(time_now().toString)) 
                         .join(thresholds, Seq("name", "instance"), "inner")
                         
         val result = metrics.withColumn("check_status", metrics("value") >= metrics("lower") && metrics("value") <= metrics("lower"))
-                            .select("name", "instance", "analysis", "check_status", "exec_time")
+                            .select("name", "instance", "constraint", "check_status", "exec_time")
         /*
         // --------------------------------
         val _checks = Check(CheckLevel.Error, name)
