@@ -123,6 +123,7 @@ object DataQualityApp {
         val std_devs = successMetricsAsDataFrame(session, analysis_std)
                             .withColumnRenamed("name","analysis")
                             .withColumnRenamed("value","std_dev")
+                            .withColumn("name", lit(name))
 
         val analysis_mean = AnalysisRunner.onData(metrics)
                             .addAnalyzer(Mean("instance"))
@@ -130,9 +131,9 @@ object DataQualityApp {
         val means = successMetricsAsDataFrame(session, analysis_mean)
                             .withColumnRenamed("name","analysis")
                             .withColumnRenamed("value","mean")
+                            .withColumn("name", lit(name))
 
         val mean_std_dev = std_devs.join(means, Seq("instance", "name"), "inner")
-        
         val thresholds = mean_std_dev.withColumn("lower", mean_std_dev("mean") - mean_std_dev("std_dev"))
                                      .withColumn("lower", mean_std_dev("mean") + mean_std_dev("std_dev"))
 
