@@ -135,9 +135,10 @@ object DataQualityApp {
 
         val thresholds = mean_std.withColumn("lower", mean_std("mean") - mean_std("std_dev"))
                                  .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
+                                 .where(mean_std("analysis").isNotNull)
 
         apply_checks(name, dataset, thresholds, session)
-        // thresholds.where(thresholds("analysis").isNotNull)
+        // thresholds
     }
 
     def time_now() = {
