@@ -97,7 +97,7 @@ object DataQualityApp {
 
         var checks = Check(CheckLevel.Error, name)
         println("Checks applied:")
-        thresholds.foreach(e => {
+        thresholds.collect.foreach(e => {
             val instance = e(0).toString
             val analysis = e(1).toString
             val lower = e(5).toString.toDouble
@@ -127,12 +127,9 @@ object DataQualityApp {
                                 .run()
                         }
         // return
-        val result =  checkResultsAsDataFrame(session, ver_result)
-                            .withColumn("name", lit(name))
-                            .withColumn("exec_time", lit(time_now().toString))
-        println("Final result: ")
-        result.show(100)
-        result
+        checkResultsAsDataFrame(session, ver_result)
+            .withColumn("name", lit(name))
+            .withColumn("exec_time", lit(time_now().toString))
     }
 
     def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
