@@ -123,8 +123,8 @@ object DataQualityApp {
                                     stddev(col("value").alias("std_dev"))
                               )
 
-        val thresholds = mean_std.withColumn("lower", mean_std_dev("mean") - mean_std_dev("std_dev"))
-                                 .withColumn("upper", mean_std_dev("mean") + mean_std_dev("std_dev"))
+        val thresholds = mean_std.withColumn("lower", mean_std("mean") - mean_std("std_dev"))
+                                 .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
 
         // apply_checks(name, dataset, thresholds, session)
         thresholds
