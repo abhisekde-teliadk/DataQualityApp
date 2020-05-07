@@ -95,8 +95,41 @@ object DataQualityApp {
     }
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
-        val col_list = thresholds.collect
+        val completeness = thresholds.where(thresholds("analysis") === "Completeness")
+                                     .select("instance")
+                                     .collect
+                                     .map(e => e(0).toString)
+                                     .toSeq
+        val entropy = thresholds.where(thresholds("analysis") === "Entropy" )
+                                .select("instance")
+                                .collect
+                                .map(e => e(0).toString)
+                                .toSeq
+        val uniqueness  = thresholds.where(thresholds("analysis") === "Uniqueness" )
+                                .select("instance")
+                                .collect
+                                .map(e => e(0).toString)
+                                .toSeq           
+
+        var runner = AnalysisRunner.onData(dataset)
+
+        completeness.foreach(e => runner.addAnalyzer(Completeness(e)))
+        entropy.foreach(e => runner.addAnalyzer(Entropy(e)))
+        uniqueness.foreach(e => runner.addAnalyzer(Uniqueness(e)))
+        runner.addAnalyzer(Size())
+
+        val analysis: AnalyzerContext = runner.run()
+
+        val metrics = successMetricsAsDataFrame(session, analysis)
+                        .withColumnRenamed("name","analysis")
+                        .withColumn("name", lit(name))
+                        .withColumn("exec_time", lit(time_now().toString)) 
+                        .join(thresholds, Seq("name", "instance"), "inner")
+                        
+        val result = metrics.withColumn("check_status", metrics("value") >= metrics("lower") && metrics("value") <= metrics("lower"))
+                            .select("name", "instance", "analysis", "check_status", "exec_time")
         /*
+        // --------------------------------
         val _checks = Check(CheckLevel.Error, name)
                             .hasCompleteness("customer_id", _ >= 0.90) 
                             .hasDistinctness(Seq("review_id"), _ >= 0.90)
@@ -104,23 +137,7 @@ object DataQualityApp {
                             .hasStandardDeviation("helpful_votes", _ < 3.0)
                             .hasEntropy("helpful_votes", _ < 2.0)
                             .hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
-        */
-        var _checks = Check(CheckLevel.Error, name)
-        val l = List(1, 2, 3, 4, 5, 6) 
-        l.foreach(i => {
-            if(i == 1)
-                _checks.hasCompleteness("customer_id", _ >= 0.90) 
-            if(i == 2)
-            _checks.hasDistinctness(Seq("review_id"), _ >= 0.90)
-            if(i == 3)
-                _checks.isNonNegative("total_votes") 
-            if(i == 4)
-                _checks.hasStandardDeviation("helpful_votes", _ < 3.0)
-            if(i == 5)
-                _checks.hasEntropy("helpful_votes", _ < 2.0)
-            if(i == 6)
-                _checks.hasCorrelation("helpful_votes", "total_votes", _ >= 0.8)
-        })
+        
 
         var checks = Check(CheckLevel.Error, name)
         col_list.foreach(e => {
@@ -160,7 +177,7 @@ object DataQualityApp {
         val result = checkResultsAsDataFrame(session, ver_result)
                         .withColumn("name", lit(name))
                         .withColumn("exec_time", lit(time_now().toString))
-
+        */
         result
     }
 
