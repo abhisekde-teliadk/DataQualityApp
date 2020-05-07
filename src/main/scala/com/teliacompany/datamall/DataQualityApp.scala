@@ -104,7 +104,7 @@ object DataQualityApp {
         // return
         checkResultsAsDataFrame(session, result)
             .withColumn("name", lit(name))
-            .withColumn("dml_time", lit(time_now().toString))
+            .withColumn("exec_time", lit(time_now().toString))
     }
 
     // def check_anomaly(in_name: String, df: DataFrame, stage3: DataFrame) = {
@@ -144,9 +144,10 @@ object DataQualityApp {
         val analysis: AnalyzerContext = runner.run()
         // return
         successMetricsAsDataFrame(session, analysis)
+            .withColumnRenamed("name","analysis")
             .withColumn("name", lit(name))
-            .withColumn("dml_time", lit(time_now().toString)) 
-        
+            .withColumn("exec_time", lit(time_now().toString)) 
+            // .withColumnRenamed("instance","column")
     }
 }
 
