@@ -117,7 +117,7 @@ object DataQualityApp {
 
     def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
 
-        val mean_std = dataset.groupBy("instance", "analysis", "name")
+        val mean_std = metrics.groupBy("instance", "analysis", "name")
                               .agg(
                                     avg(col("value").alias("mean")),
                                     stddev(col("value").alias("std_dev"))
