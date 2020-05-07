@@ -118,9 +118,9 @@ object DataQualityApp {
     def check_anomaly(name: String, dataset: DataFrame, metrics: DataFrame, session: SparkSession) = {
 
         val mean_std = metrics.groupBy("instance", "analysis", "name")
-                              .agg(avg(col("value")), stddev(col("value")))
+                              .agg(avg(col("value")), stddev_pop(col("value")))
                               .withColumnRenamed("avg(value)", "mean")
-                              .withColumnRenamed("stddev(value)", "std_dev")
+                              .withColumnRenamed("stddev_pop(value)", "std_dev")
 
         val thresholds = mean_std.withColumn("lower", mean_std("mean") - mean_std("std_dev"))
                                  .withColumn("upper", mean_std("mean") + mean_std("std_dev"))
