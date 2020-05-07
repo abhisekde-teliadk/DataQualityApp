@@ -89,7 +89,7 @@ object DataQualityApp {
 
     def apply_checks(name: String, dataset: DataFrame, thresholds: DataFrame, session: SparkSession) = {
         var checks = Check(CheckLevel.Error, name)
-
+        println("Checks applied:")
         thresholds.foreach(e => {
             val instance = e(0).toString
             val analysis = e(1).toString
@@ -99,15 +99,19 @@ object DataQualityApp {
             if(analysis == "Completeness")
                 checks.hasCompleteness(instance, _ >= lower)
                 checks.hasCompleteness(instance, _ <= upper)
+                println(instance + " -> " + "hasCompleteness(" + lower + ", " + upper + ")")
             if(analysis == "Uniqueness")
+                checks.hasUniqueness(instance, _ >= lower)
+                checks.hasUniqueness(instance, _ <= upper)
+                println(instance + " -> " + "hasUniqueness(" + lower + ", " + upper + ")")
+            if(analysis == "Entropy")
                 checks.hasEntropy(instance, _ >= lower)
                 checks.hasEntropy(instance, _ <= upper)
-            if(analysis == "Entropy")
-                checks.hasCompleteness(instance, _ >= lower)
-                checks.hasCompleteness(instance, _ <= upper)
+                println(instance + " -> " + "hasEntropy(" + lower + ", " + upper + ")")
             if(analysis == "Size")
                 checks.hasSize(_ >= lower)
                 checks.hasSize(_ <= upper)
+                println(name + " -> " + "hasSize(" + lower + ", " + upper + ")")
         })
 
         val result: VerificationResult = { 
