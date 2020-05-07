@@ -97,7 +97,7 @@ object DataQualityApp {
     def apply_checks(metrics: DataFrame, thresholds: DataFrame) = {
         val met_thres = metrics.join(thresholds, Seq("analysis", "instance", "name"), "inner")
         //return
-        met_thres.withColumn("check_ok", met_thres("value") >= met_thres("lower") && met_thres("value") <= met_thres("upper"))
+        met_thres.withColumn("check_ok", met_thres("value")-met_thres("lower") >= 0.01 && met_thres("upper")-met_thres("value") >= 0.01 ) // 1% margin for floating point errors
                  .select("name", "instance", "analysis", "check_ok", "value", "lower", "upper", "exec_time")
     }
 
