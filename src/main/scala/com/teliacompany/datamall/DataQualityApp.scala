@@ -2,7 +2,7 @@ package com.teliacompany.datamall
 
 import org.apache.spark.sql.{SparkSession, SQLContext, DataFrame}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.SaveMode._
+import org.apache.spark.sql.SaveMode
 
 import com.amazon.deequ.suggestions.{ConstraintSuggestionRunner, Rules}
 
