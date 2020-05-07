@@ -128,7 +128,7 @@ object DataQualityApp {
                             VerificationSuite().onData(dataset)
                                 .addCheck(Check(CheckLevel.Error, "Data Validation Check")
                                     .hasCompleteness("customer_id", _ >= 0.90) 
-                                    .hasUniqueness("review_id", _ >= 0.90)
+                                    .hasDistinctness("review_id", _ >= 0.90)
                                     .isNonNegative("total_votes") 
                                     .hasStandardDeviation("helpful_votes", _ < 3.0)
                                     .hasEntropy("helpful_votes", _ < 2.0)
