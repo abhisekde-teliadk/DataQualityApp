@@ -48,15 +48,12 @@ object DataQualityApp {
         .mode("append")
         .parquet(out_metric)
     stage2.show(100)
-      
-    val metrics = spark.read
-                  .option("basePath", out_metric)
-                  .parquet(out_metric + "/*")
-    val rows = metrics.count
-    println("Metrices record count: " + rows.toString)
 
     // Evaluation only steps
     if(args(0) == "--check") {
+        val metrics = spark.read
+                  .option("basePath", out_metric)
+                  .parquet(out_metric + "/*")
         println("Thresholds for anomaly")
         val stage3 = calc_thresholds(metrics) // Calculate boundaries of acceptable values
         stage3.show(100)
@@ -67,7 +64,6 @@ object DataQualityApp {
             .mode(SaveMode.Overwrite)
             .parquet(out_checks)
         stage4.show(100)  
-        // stage4.printSchema
         }
     spark.stop()
 
