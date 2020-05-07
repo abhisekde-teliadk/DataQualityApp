@@ -96,10 +96,10 @@ object DataQualityApp {
         var checks = Check(CheckLevel.Error, name)
 
         thresholds.foreach(e => {
-            val instance = e(0)
-            val analysis = e(1)
-            val lower = e(5)
-            val upper = e(6)
+            val instance = e(0).toString
+            val analysis = e(1).toString
+            val lower = e(5).toLong
+            val upper = e(6).toLong
 
             if(analysis == "Completeness")
                 checks.hasCompleteness(instance, _ >= lower)
