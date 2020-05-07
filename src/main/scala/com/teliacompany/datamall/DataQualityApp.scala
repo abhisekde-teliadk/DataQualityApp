@@ -13,8 +13,9 @@ import com.amazon.deequ.checks.Check._
 
 import com.amazon.deequ.analyzers.runners.{AnalysisRunner, AnalyzerContext}
 import com.amazon.deequ.analyzers.runners.AnalyzerContext.successMetricsAsDataFrame
-import com.amazon.deequ.analyzers.{StandardDeviation, Compliance, Correlation, Size, Completeness, Mean, ApproxCountDistinct, Maximum, Minimum, Entropy, GroupingAnalyzer, Uniqueness}
-
+import com.amazon.deequ.analyzers.{StandardDeviation, Compliance, Correlation, Size, 
+                                   Completeness, Mean, ApproxCountDistinct, Maximum, 
+                                   Minimum, Entropy, GroupingAnalyzer, Uniqueness}
 
 object DataQualityApp {
     def main(args: Array[String]) = {
@@ -53,7 +54,7 @@ object DataQualityApp {
     val rows = metrics.count
     println("Metrices record count: " + rows.toString)
 
-    println("Thresholds for anomaly: ")
+    println("Thresholds for anomaly")
     val stage3 = calc_thresholds(in_name, df, metrics, spark) // Calculate boundaries of acceptable values
     stage3.show(100)
 
