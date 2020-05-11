@@ -6,11 +6,6 @@ import org.apache.spark.sql.SaveMode
 
 import com.amazon.deequ.suggestions.{ConstraintSuggestionRunner, Rules}
 
-import com.amazon.deequ.{VerificationSuite, VerificationResult}
-import com.amazon.deequ.VerificationResult.checkResultsAsDataFrame
-import com.amazon.deequ.checks.{Check, CheckLevel}
-import com.amazon.deequ.checks.Check._
-
 import com.amazon.deequ.analyzers.runners.{AnalysisRunner, AnalyzerContext}
 import com.amazon.deequ.analyzers.runners.AnalyzerContext.successMetricsAsDataFrame
 import com.amazon.deequ.analyzers.{StandardDeviation, Compliance, Correlation, Size, 
@@ -24,22 +19,23 @@ object DataQualityApp {
         // Validate command line arguments
         require(args.length == 2 && args(1).startsWith("/") && (args(0) == "--execute" || args(0) == "--check"), 
                 "\nUsage: Requires 2 argument: \n - Execution mode: [--execute | --check]\n - <full path to parquet dataset> \nExample: \nspark2-submit --class \"com.teliacompany.datamall.DataQualityApp\" \\ \n --master yarn \\ \n --conf spark.ui.port=XXXX \\ \n /path/to/dataquality_xxxx.jar <execution_mode> <full path to parquet dataset>\n")
-
+        
         val path        = args(1)
+        // Output dataset 
         val p_items     = path.split("/")
-        val pond        = p_items(p_items.indexOf("data") +1)
+        val pond        = "work" // p_items(p_items.indexOf("data") +1)
         val in_name     = p_items(p_items.lastIndexOf("data") -1)
-        val project     = p_items(p_items.indexOf(in_name) -1)
-        val out_checks  = "/data/" + pond + "/checks_" + project + "_" + in_name
-        val out_metric  = "/data/" + pond + "/metric_" + project + "_" + in_name
+        val project     = "DATA_QUALITY_MGR" // p_items(p_items.indexOf(in_name) -1)
+        // val out_checks  = "/data/" + pond + "/checks_" + project + "_" + in_name
+        // val out_metric  = "/data/" + pond + "/metric_" + project + "_" + in_name
+        val out_checks  = "/data/" + pond + "/" + project + "/" + "checks_" + in_name
+        val out_metric  = "/data/" + pond + "/" + project + "/" + "metric_" + in_name 
 
         val df = spark.read.option("basePath", path).parquet(path + "/*")
-
         val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
-        
         val stage2 = calc_metrics(in_name, df, stage1, spark) // Calulate daily metrices
 
-        // Metrices calculation only
+        // Metrics calculation only
         if(args(0) == "--execute") {
             println("+++ Metrices Results: " + out_metric) 
             stage2.show(100)
@@ -51,9 +47,7 @@ object DataQualityApp {
         // Anomaly detection
         if(args(0) == "--check") {
             val metrics = spark.read.option("basePath", out_metric).parquet(out_metric + "/*") // historical record of metrices
-
             val stage3 = calc_thresholds(metrics) // Calculate boundaries of acceptable values
-
             val stage4 = anomaly_check(stage2, stage3) // Anomaly detection by comparing with historical metrices
 
             stage4.write
@@ -65,8 +59,7 @@ object DataQualityApp {
 
             println("+++ Anomaly Check Results: " + out_checks)
             stage4.show(100)  
-            }
-            
+        }
         spark.stop() // exit
     }
 
@@ -74,9 +67,7 @@ object DataQualityApp {
         import spark.implicits._
 
         val schema = dataset.schema.map(e => (name, e.name, e.dataType.typeName)).toDF("name", "column", "data_type")
-
         val result = ConstraintSuggestionRunner().onData(dataset).addConstraintRules(Rules.DEFAULT) .run()
-
         val sug1 = result.constraintSuggestions
                          .flatMap { 
                                     case (column, suggestions) =>  suggestions.map { 
@@ -118,7 +109,6 @@ object DataQualityApp {
         val compliance_list = compliance.select("column").collect.map(e => e(0).toString).toSeq
 
         var runner = AnalysisRunner.onData(dataset)
-
         complete_list.foreach(e => {
                 runner.addAnalyzer(Completeness(e))
                 runner.addAnalyzer(Uniqueness(e))
