@@ -33,7 +33,6 @@ object DataQualityApp {
 
         val df = spark.read.option("basePath", path).parquet(path + "/*")
         val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
-        stage1.show(100)
         val stage2 = calc_metrics(in_name, df, stage1, spark) // Calulate daily metrices
 
         // Metrics calculation only
@@ -111,14 +110,11 @@ object DataQualityApp {
 
         var runner = AnalysisRunner.onData(dataset)
         complete_list.foreach(e => {
-                println("Completeness -> " + e)
                 runner.addAnalyzer(Completeness(e))
-                println("Uniqueness -> " + e)
                 runner.addAnalyzer(Uniqueness(e))
             }
         )
         compliance_list.foreach(e => {
-                println("Entropy -> " + e)
                 runner.addAnalyzer(Entropy(e))
             }
         )
