@@ -25,11 +25,11 @@ object DataQualityApp {
         val p_items     = path.split("/")
         val pond        = "work" // p_items(p_items.indexOf("data") +1)
         val in_name     = p_items(p_items.lastIndexOf("data") -1)
-        val project     = "DATA_QUALITY_MGR" // p_items(p_items.indexOf(in_name) -1)
+        val project     = p_items(p_items.indexOf(in_name) -1)
         // val out_checks  = "/data/" + pond + "/checks_" + project + "_" + in_name
         // val out_metric  = "/data/" + pond + "/metric_" + project + "_" + in_name
-        val out_checks  = "/data/" + pond + "/" + project + "/" + "checks_" + in_name
-        val out_metric  = "/data/" + pond + "/" + project + "/" + "metric_" + in_name 
+        val out_checks  = "/data/" + pond + "/checks/"+ project + "/" + in_name
+        val out_metric  = "/data/" + pond + "/metric/"+ project + "/" + in_name 
 
         val df = spark.read.option("basePath", path).parquet(path + "/*")
         val stage1 = suggest_constraints(in_name, df, spark)  // Get suggestions
