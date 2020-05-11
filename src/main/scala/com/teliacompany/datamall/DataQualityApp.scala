@@ -106,7 +106,7 @@ object DataQualityApp {
         val compliance = suggestion.where(suggestion("constraint").startsWith("Compliance"))
 
         val complete_list = completeness.select("column").collect.map(e => e(0).toString).toSeq
-        val compliance_list = compliance.select("column").collect.map(e => e(0).toString).toSeq
+        val compliance_list = compliance.select("column").collect.map(e => e(0).toString).toSet.toSeq
 
         var runner = AnalysisRunner.onData(dataset)
         complete_list.foreach(e => {
