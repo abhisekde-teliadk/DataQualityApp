@@ -110,11 +110,17 @@ object DataQualityApp {
 
         var runner = AnalysisRunner.onData(dataset)
         complete_list.foreach(e => {
+                println("Completeness -> " + e)
                 runner.addAnalyzer(Completeness(e))
+                println("Uniqueness -> " + e)
                 runner.addAnalyzer(Uniqueness(e))
             }
         )
-        compliance_list.foreach(e => runner.addAnalyzer(Entropy(e)))
+        compliance_list.foreach(e => {
+                println("Entropy -> " + e)
+                runner.addAnalyzer(Entropy(e))
+            }
+        )
         runner.addAnalyzer(Size())
 
         val analysis: AnalyzerContext = runner.run()
